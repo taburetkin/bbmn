@@ -8,6 +8,7 @@ module.exports = {
 		file: 'bbmn.esm.js',
 		format: 'esm',
 		exports: 'named',
+		sourcemap: true,
 		globals: {
 			jquery: '$',
 			underscore: '_'
