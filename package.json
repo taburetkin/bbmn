@@ -14,18 +14,16 @@
 		"jquery": "^3.3.1",
 		"underscore": "^1.9.1"
 	},
-	"dependencies": {
-		"bbmn-components": "https://github.com/taburetkin/bbmn-components",
-		"bbmn-controls": "https://github.com/taburetkin/bbmn-controls",
-		"bbmn-core": "^1.0.1",
-		"bbmn-mixins": "https://github.com/taburetkin/bbmn-mixins",
-		"bbmn-routing": "https://github.com/taburetkin/bbmn-routing",
-		"bbmn-utils": "^1.0.19",
-		"rollup": "^0.67.4"
-	},
 	"devDependencies": {
+		"rollup": "^0.67.4",
 		"rollup-plugin-json": "^3.1.0",
 		"rollup-plugin-node-resolve": "^3.4.0",
-		"rollup-plugin-size-snapshot": "^0.7.0"
+		"rollup-plugin-size-snapshot": "^0.7.0",
+		"bbmn-core": "^1.0.1",
+		"bbmn-utils": "^1.0.19",
+		"bbmn-mixins": "https://github.com/taburetkin/bbmn-mixins",
+		"bbmn-components": "https://github.com/taburetkin/bbmn-components",
+		"bbmn-routing": "https://github.com/taburetkin/bbmn-routing",
+		"bbmn-controls": "https://github.com/taburetkin/bbmn-controls"
 	}
 }
