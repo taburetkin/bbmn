@@ -1,0 +1,29 @@
+{
+	"name": "bbmn",
+	"version": "1.0.0",
+	"description": "backbone marionette tools",
+	"main": "index.js",
+	"author": "dimtabu",
+	"license": "MIT",
+	"peerDependencies": {
+		"backbone": "^1.3.3",
+		"backbone.marionette": "^4.0.0",
+		"backbone.radio": "^2.0.0",
+		"jquery": "^3.3.1",
+		"underscore": "^1.9.1"
+	},
+	"dependencies": {
+		"bbmn-components": "https://github.com/taburetkin/bbmn-components",
+		"bbmn-controls": "https://github.com/taburetkin/bbmn-controls",
+		"bbmn-core": "^1.0.1",
+		"bbmn-mixins": "https://github.com/taburetkin/bbmn-mixins",
+		"bbmn-routing": "https://github.com/taburetkin/bbmn-routing",
+		"bbmn-utils": "^1.0.19",
+		"rollup": "^0.67.4"
+	},
+	"devDependencies": {
+		"rollup-plugin-json": "^3.1.0",
+		"rollup-plugin-node-resolve": "^3.4.0",
+		"rollup-plugin-size-snapshot": "^0.7.0"
+	}
+}
