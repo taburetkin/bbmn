@@ -2,7 +2,9 @@
 	"name": "bbmn",
 	"version": "1.0.0",
 	"description": "backbone marionette tools",
-	"main": "index.js",
+	"main": "bbmn.esm.js",
+	"module": "bbmn.esm.js",
+	"jsNext": "bbmn.esm.js",
 	"author": "dimtabu",
 	"license": "MIT",
 	"peerDependencies": {
