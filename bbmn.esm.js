@@ -1,8 +1,8 @@
+import Backbone, { Collection, Events, Model, Router, View, ajax, history } from 'backbone';
+export { Model, Collection, View as BackboneView, Events, Router, history, ajax } from 'backbone';
+import $ from 'jquery';
 import Mn, { MnObject, Object as Object$1, Region, normalizeMethods, View as View$1, CollectionView } from 'backbone.marionette';
 export { Region } from 'backbone.marionette';
-import $ from 'jquery';
-import Backbone, { Collection, Events, Model, Router, View, ajax } from 'backbone';
-export { Model, Collection, View as BackboneView, Events, Router, history, ajax } from 'backbone';
 import _ from 'underscore';
 
 var version = "1.0.0";
@@ -2020,7 +2020,7 @@ var index$4 = Base => Base.extend({
 	},
 });
 
-var index$5 = Base => Base.extend({
+var childrenableMixin = Base => Base.extend({
 
 	constructor(opts){
 
@@ -2162,7 +2162,7 @@ var index$5 = Base => Base.extend({
 
 }, { ChildrenableMixin: true });
 
-var index$6 = Base => Base.extend({
+var index$5 = Base => Base.extend({
 	
 	// usage:
 	// model.entity('users');
@@ -2412,7 +2412,7 @@ const CollectionMixin = Base => Base.extend({
 });
 
 
-var index$7 = Base => {
+var index$6 = Base => {
 
 	const mixin = isModelClass(Base) ? ModelMixin(Base)
 		: isCollectionClass(Base) ? CollectionMixin(Base)
@@ -2445,7 +2445,7 @@ function getDisplayConfig(key, model, schema){
 		|| (schema && schema.display) || {};
 }
 
-var index$8 = Base => {
+var index$7 = Base => {
 	const originalGet = Model.prototype.get;
 	const Mixed = Base.extend({
 		getByPath(key){
@@ -2512,7 +2512,7 @@ var index$8 = Base => {
 	return Mixed;
 };
 
-var index$9 = Base => Base.extend({
+var index$8 = Base => Base.extend({
 	defaultWait: false,
 	saveReturnPromise: false,
 	patchInsteadSave: false,
@@ -2557,7 +2557,7 @@ var index$9 = Base => Base.extend({
 	}
 });
 
-var index$a = Base => Base.extend({
+var index$9 = Base => Base.extend({
 	buildViewByKey(...args){
 		return buildViewByKey.call(this, ...args);
 	},
@@ -2751,7 +2751,7 @@ function normalizeNestedViewContextRegion(context) {
 	return context;
 }
 
-var index$b = Base => Base.extend({
+var index$a = Base => Base.extend({
 	constructor(){
 		this._nestedViews = {};
 		Base.apply(this, arguments);
@@ -2875,7 +2875,7 @@ var index$b = Base => Base.extend({
 	
 });
 
-var index$c = Base => Base.extend({
+var index$b = Base => Base.extend({
 	triggerScrollEvents: false,
 	scrollHandlingEnabled: true,
 	constructor(){
@@ -2977,7 +2977,7 @@ var index$c = Base => Base.extend({
 
 });
 
-var index$d = Base => Base.extend({
+var index$c = Base => Base.extend({
 	defaultWait: false,
 	createReturnPromise: false,
 	create(model, options = {}){
@@ -6488,9 +6488,3103 @@ const Selector = BaseSelector.extend({
 
 });
 
-/*
-export * from 'bbmn-routing';
-export * from 'bbmn-controls';
-*/
+function get(router) {
+	var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	var key = arguments[2];
+	var update = arguments[3];
 
-export { version as VERSION, newObject as MnObject, BaseClass, betterResult, camelCase, takeFirst, comparator, compareAB, convertString, toNumber, extend, flattenObject as flat, getByPath, getOption, instanceGetOption, hasFlag, getFlag, isKnownCtor, ctors as knownCtors, isEmptyValue, mix, paramsToObject$1 as paramsToObject, setByPath, convertToBoolean as toBool, unFlat as unflat, compareObjects, mergeObjects$$1 as mergeObjects, cloneValue as clone, triggerMethod, triggerMethodOn, mergeOptions, buildByKey, buildViewByKey, enums, enumsStore, skipTake, renderInNode, isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass, emptyFetchMixin, index$2 as emptyViewMixin, improvedIndexesMixin, nextCollectionViewMixin, customsMixin, index$3 as fetchNextMixin, optionsMixin, index$4 as improvedFetchMixin, index$5 as childrenableMixin, index$6 as nestedEntitiesMixin, index$7 as urlPatternMixin, index$8 as smartGetMixin, index$9 as saveAsPromiseMixin, cssClassModifiersMixin, index$b as nestedViewsMixin, destroyViewMixin, index$a as buildViewByKeyMixin, index$c as scrollHandlerMixin, index$d as createAsPromiseMixin, Process, startableMixin, App, store as ModelSchemas, ModelSchema, PropertySchema, modelSchemaMixin, validator, User, Token as BearerToken, Stack as ViewStack, store$1 as store, ExtView as View, ExtCollectionVIew as CollectionView, AtomText as AtomTextView, TextView, notify, notifies, Notifier, syncWithNotifyMixin, Action, store$2 as ActionStore, actionableMixin, action, modals, Selector, initSelectorMixin };
+
+	var value = betterResult(opts, key, { context: router, args: [router] });
+	if (value == null) {
+		value = router.getOption(key, { args: [router] });
+		if (update) opts[key] = value;
+	}
+	return value;
+}
+
+// converts route method arguments to plain object;
+// _normalizeRegisterRouteArguments
+// { route, rawRoute, callback, name }
+function routeArgumentsToObject(router, route, name, callback) {
+	var opts = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
+
+
+	var context = {};
+
+	if (_.isObject(route)) {
+		context = route;
+
+		//then second argument is probably options;
+		_.extend(opts, name);
+	} else if (_.isFunction(name)) {
+		_.extend(context, { route: route, callback: name, name: _.uniqueId('routerAction') });
+	} else {
+		_.extend(context, { route: route, name: name, callback: callback });
+	}
+
+	var isRouterHoldsActions = get(router, opts, 'isRouterHoldsActions', true);
+
+	// last chance to get callback from router instance by name
+	// this behavior can be disabled through `isRouterHoldsActions` options
+	if (!_.isFunction(context.callback) && isRouterHoldsActions && _.isFunction(router[context.name])) {
+
+		context.callback = router[context.name];
+	}
+
+	//store original route
+	context.rawRoute = context.route;
+
+	!context.name && (context.name = _.uniqueId('routerAction'));
+
+	//converts route to RegExp pattern
+	if (!_.isRegExp(context.route)) context.route = router._routeToRegExp(context.route);
+
+	// by default backbone router wraps every callback with own wrapper
+	// which in turn call actual callback with correct arguments on route
+	// this callback was inlined and can not be overrided, so now its possible	
+	context.callbackWrapper = _.bind(router._processCallback, router, context);
+
+	return context;
+}
+
+function createActionContext(router, routeContext, fragment) {
+	var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+
+	var rawArgs = router._extractParameters(routeContext.route, fragment);
+
+	var result = _.extend({}, routeContext, { fragment: fragment, rawArgs: rawArgs }, options, { options: options });
+
+	var args = rawArgs.slice(0);
+	var queryString = args.pop();
+
+	_.extend(result, { qs: prepareActionQueryString(router, queryString) });
+	_.extend(result, { args: prepareActionArguments(routeContext.rawRoute, args) });
+
+	if (result.routeType == null) {
+		result.routeType = 'route';
+	}
+
+	return result;
+}
+
+function prepareActionQueryString(router, queryString) {
+	if (_.isString(queryString)) return router.queryStringParser(queryString);else return {};
+}
+
+function prepareActionArguments(rawRoute, args) {
+
+	var params = rawRoute.match(/:([^/|)]+)/g) || [];
+
+	var res = {};
+	_(params).each(function (name, index$$1) {
+		name = name.substring(1);
+
+		if (args == null) return;
+
+		if (name in res && _.isArray(res[name])) res[name].push(args[index$$1]);else if (name in res && !_.isArray(res[name])) res[name] = [res[name]].concat(args[index$$1]);else res[name] = args[index$$1];
+	});
+	return res;
+}
+
+function toPromise(arg) {
+	var resolve = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+	if (arg instanceof Promise || arg && _.isFunction(arg.then)) return arg;else if (arg instanceof Error) return Promise.reject(arg);else return resolve ? Promise.resolve(arg) : Promise.reject(arg);
+}
+
+function getCallbackFunction(callback, executeResult) {
+	return function () {
+		try {
+			executeResult.value = callback && callback.apply(undefined, arguments);
+		} catch (exception) {
+			executeResult.value = exception;
+		}
+		executeResult.promise = toPromise(executeResult.value);
+		return executeResult.value;
+	};
+}
+
+function processCallback(router, actionContext, routeType) {
+
+	var args = router.getOption('classicMode') ? actionContext.rawArgs || [] : [actionContext];
+
+	var asPromise = router.getOption('callbackAsPromises');
+	var executeResult = {};
+	var callback = getCallbackFunction(actionContext.callback, executeResult, asPromise);
+
+	router.triggerEvent('before:' + routeType, actionContext);
+
+	var shouldTriggerEvent = router.execute(callback, args);
+	if (shouldTriggerEvent !== false) {
+		router.triggerEvent(routeType, actionContext);
+		if (routeType == 'route' || routeType == 'backroute') router.lastAttempt = actionContext;
+		history.actionContext = actionContext;
+	}
+
+	executeResult.promise.then(function (arg) {
+		router.triggerEvent('after:' + routeType, actionContext);
+		return arg;
+	}, function (error) {
+		router.triggerEvent('error:' + routeType, error, actionContext);
+		router.handleError(error, actionContext);
+	});
+
+	return executeResult.value;
+}
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+//import $ from 'jquery';
+
+var routeErrorHandler = {
+	handlers: {
+		'js:error': function jsError(error) {
+			throw error;
+		}
+	},
+	handle: function handle(error, context, args) {
+		var _this = this;
+
+		var handlers = this._getHandleContext(error, context, args) || {};
+		return _(handlers).some(function (options, key) {
+			return _this.applyHandler(key, options);
+		});
+	},
+	applyHandler: function applyHandler(key) {
+		var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+
+		var handler = this.getHandler(key, options);
+		if (!handler) return;
+		var context = options.context,
+		    args = options.args;
+
+		return handler.apply(context, args);
+	},
+	getHandler: function getHandler(key) {
+		if (_.isFunction(this.handlers[key])) return this.handlers[key];
+	},
+	setHandler: function setHandler(key, handler, bindTo) {
+		if (!_.isString(key) || key === '') throw new Error('setHandler first argument must be a non empty string');
+
+		if (!_.isFunction(handler)) {
+			delete this.handlers[key];
+		} else {
+			if (bindTo) {
+				handler = handler.bind(bindTo);
+			}
+			this.handlers[key] = handler;
+		}
+	},
+	setHandlers: function setHandlers(hash, bindTo) {
+		var _this2 = this;
+
+		var nullable = hash === null;
+		var items = nullable && this.handlers || hash;
+		if (!_.isObject(items)) return;
+		_(items).each(function (handler, key) {
+			return _this2.setHandler(key, nullable || handler, bindTo);
+		});
+	},
+
+
+	// should return hash: { 'handler_key': { context: handler_context, args: handler_arguments}}
+	_getHandleContext: function _getHandleContext(error, context) {
+		var _this3 = this;
+
+		var args = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+
+
+		if (_.isArray(error)) {
+			return _(error).reduce(function (memo, item) {
+				return _.extend(memo, _this3._getHandleContext(item, context, args));
+			}, {});
+		}
+
+		if (_.isFunction(this.getHandleContext)) {
+			var custom = this.getHandleContext(error, context, args);
+			if (custom != null) return custom;
+		}
+
+		if (error instanceof Error) {
+			args.unshift(error);
+			return { 'js:error': { context: context, args: args } };
+		} else if (_.isString(error)) {
+			return _defineProperty({}, error, { context: context, args: args });
+		} else if (error instanceof $.Deferred().constructor) {
+			args.unshift(error);
+			return { 'jq:xhr': { context: context, args: args } };
+		}
+	},
+
+
+	// provide your own arguments processor
+	// should return hash: { 'handler_key': { context: handler_context, args: handler_arguments}}
+	getHandleContext: undefined
+
+};
+
+//import paramStringToObject from '../../../utils/params-to-object/index.js';
+//import { Backbone, Router as BbRouter } from '../../../vendors/backbone.js';
+
+var Router$1 = Router.extend({
+
+	// for migrating from Mn.AppRoute
+	// set to true. it will populate routes from { controller, appRoutes } structure.
+	isMarionetteStyle: false,
+
+	// by default Backbone.Router tries to lookup callback in router instance by name `callback = this[name]` if there is no callback provided
+	// its recomend to turn this feature to false
+	// default value is true for Backbone.Router compatability
+	isRouterHoldsActions: true,
+
+	// by default Backbone.Router `route` method returns router itself instead of just created routeContext for chaining purposes.
+	// you can change this behavior turning this feature to false
+	isRouteChaining: true,
+
+	//in classic mode actions receive argument array
+	//if you need actionContext instead turn this option to false
+	classicMode: true,
+
+	constructor: function constructor() {
+		var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+
+		this.options = _.extend({}, _.result(this, 'options'), options);
+
+		Router.apply(this, arguments);
+	},
+	getOption: function getOption$$1() {
+		return getOption.apply(undefined, [this].concat(Array.prototype.slice.call(arguments)));
+	},
+
+	triggerMethod: triggerMethod,
+	/*
+ 
+ 	initialize methods
+ 	"when a router initialized"
+ 
+ */
+
+	//by default router expects that routes will result in { route, callback } hash
+	//we are extending this to provide more flexibility
+	// - overrided
+	_bindRoutes: function _bindRoutes() {
+
+		var routes = this.getInitRoutes();
+		if (!_.size(routes)) return;
+		this.addRoutes(routes);
+	},
+	getInitRoutes: function getInitRoutes() {
+		var routes = void 0;
+		if (this.getOption('isMarionetteStyle')) {
+			var controller = this.getOption('controller') || {};
+			var approutes = this.getOption('appRoutes') || {};
+			routes = _(approutes).map(function (name, route) {
+				return {
+					route: route, name: name,
+					callback: controller[name]
+				};
+			});
+		} else {
+			routes = this.getOption('routes');
+		}
+		return routes;
+	},
+
+
+	/*
+ 	manipulating routes
+ 	adding
+ */
+
+	// refactored original route method
+	// chain:true by default is for supporting default behavior
+	// routerHoldsActions: true - backbone router tries to get callback from router itself if there is no callback provided. 
+	// this options allow to support this behavior, but its recomended not to hold action inside router instance
+	// - overrided
+	route: function route(_route, name, callback) {
+		var opts = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+
+		//normalizing passed arguments and putting them into a context object
+		//refactored from original route
+		// let context = this._normalizeRegisterRouteArguments(route, name, callback, opts);
+
+		// //extends context with result of `mergeWithRegisterRouteContext`
+		// this._normalizeRegisterRouteContext(context);
+
+		// //wrapping provided callback 
+		// this._normalizeRegisterRouteCallback(context);
+
+		var context = this._buildRouteContext(_route, name, callback, opts);
+
+		//refactored for providing possibility to override
+		//at this point context should be almost ready
+		this.registerRouteContext(context);
+
+		this._storeCreatedContext(context, opts);
+
+		return opts.isRouteChaining === true ? this : context;
+	},
+
+
+	// provide more semantic alias for route
+	addRoute: function addRoute(route, name, callback) {
+		var opts = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+		if (opts.isRouteChaining == null) opts.isRouteChaining = this.getOption('isRouteChaining');
+
+		var context = this.route(route, name, callback, opts);
+		return context;
+	},
+
+
+	//process many routes at once
+	//accepts object { name, routeContext | handler }
+	// or array of routeContexts
+	addRoutes: function addRoutes(routes) {
+		var _this = this;
+
+		var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+
+		if (opts.isRouteChaining == null) opts.isRouteChaining = this.getOption('isRouteChaining');
+
+		var normalized = _(routes).chain().map(function (value, key) {
+			return _this._normalizeRoutes(value, key);
+		}).filter(function (f) {
+			return _.isObject(f);
+		}).value();
+
+		if (opts.doNotReverse != true) normalized.reverse();
+
+		var registered = _(normalized).map(function (route) {
+			return route && _this.addRoute(route, _.extend({ massAdd: true }, opts));
+		});
+
+		if (opts.doNotReverse != true) registered.reverse();
+
+		_(registered).each(function (c) {
+			return _this._storeCreatedContext(c);
+		});
+
+		return registered;
+	},
+
+
+	// internal method called by `addRoutes` to normalize provided data
+	_normalizeRoutes: function _normalizeRoutes(value, key) {
+		//let route, name, callback;
+		var context = void 0;
+		if (_.isString(value)) {
+			context = {
+				route: key,
+				name: value
+			};
+		} else if (_.isFunction(value)) {
+			context = { route: key, callback: value };
+		} else if (_.isObject(value)) {
+			context = _.clone(value);
+			if (!_.has(context, 'route')) context.route = key;else if (_.has(context, 'route') && !_.has(context, 'name')) context.name = key;
+		} else {
+			return;
+		}
+		return context;
+	},
+	_buildRouteContext: function _buildRouteContext(route, name, callback, opts) {
+
+		var context = routeArgumentsToObject(this, route, name, callback, opts);
+
+		return this.buildRouteContext(context);
+	},
+
+
+	//override this method if you need more information in route context
+	// should return object wich will be merged with default context
+	// be aware of providing reserved properties: route, name, callback
+	// this will override context defaults
+	buildRouteContext: function buildRouteContext(context) {
+		return context;
+	},
+
+	//finally, putting handler to the backbone.history.handlers
+	registerRouteContext: function registerRouteContext(context) {
+		history.route(context.route, context.callbackWrapper, context);
+	},
+
+
+	//store registered context for further use
+	_storeCreatedContext: function _storeCreatedContext(context) {
+		var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+		this.routeContexts || (this.routeContexts = {});
+		if (!opts.massAdd) this.routeContexts[context.name] = context;
+		return context;
+	},
+
+
+	/*
+ 
+ 	process route methods		
+ 	"when route happens"
+ 
+ */
+
+	//inner route handler
+	//preparing actionContext and calls public processCallback
+	_processCallback: function _processCallback(routeContext, fragment) {
+		var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+		var actionContext = createActionContext(this, routeContext, fragment, options);
+		actionContext.restart = function () {
+			return actionContext.callbackWrapper(fragment, options);
+		};
+		var result = this.processCallback(actionContext, actionContext.routeType, options);
+		return result;
+	},
+
+
+	//by default behave as original router
+	//override this method to process action by your own
+	processCallback: function processCallback$$1(actionContext, routeType) {
+
+		return processCallback(this, actionContext, routeType);
+	},
+	handleError: function handleError(error, action$$1) {
+		routeErrorHandler.handle(error, this, [action$$1]);
+	},
+
+
+	//just triggers appropriate events
+	// triggerRouteEvents(context, event, name, ...args) {
+	// 	if (event == 'route') {
+	// 		this.lastActionContext = context;
+	// 	}
+	// 	this.trigger(`${event}:${name}`, ...args);
+	// 	this.trigger(event, name, ...args);
+	// 	Backbone.history.trigger(event, this, name, ...args);
+	// },
+
+	triggerEvent: function triggerEvent(event, context) {
+		this.trigger(event, context);
+		history.trigger(event, context);
+	},
+
+
+	//converts string to object
+	//default implementation, can be overriden by user
+	queryStringParserOptions: { complex: true },
+	queryStringParser: function queryStringParser(string, opts) {
+		var options = _.extend({}, this.getOption('queryStringParserOptions'), opts);
+		return paramsToObject$1(string, options);
+	},
+
+
+	// navigate(...args){
+	// 	historyNavigate(...args);
+	// 	return this;
+	// },
+
+	_routeToRegExp: function _routeToRegExp(route) {
+
+		var optionalParam = /\((.*?)\)/g;
+		var namedParam = /(\(\?)?:\w+/g;
+		var splatParam = /\*\w+/g;
+		var escapeRegExp = /[-{}[]+?.,\\\^$|#\s]/g;
+
+		route = route.replace(escapeRegExp, '\\$&').replace(optionalParam, '(?:$1)?').replace(namedParam, function (match, optional) {
+			return optional ? match : '([^/?]+)';
+		}).replace(splatParam, '([^?]*?)');
+		var flags = this.getOption('routeCaseInsensitive') ? 'i' : '';
+		return new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$', flags);
+	},
+
+
+	/*
+ 	Some API methods
+ */
+
+	getContextByFragment: function getContextByFragment(fragment) {
+		if (!_.isString(fragment)) return;
+		//let contexts = this.routeContexts;
+		//console.log('Router contexts', contexts);
+		var result = _(this.routeContexts).find(function (cntx) {
+			return cntx.route.test(fragment);
+		});
+		return result;
+	}
+});
+
+var pathStripper = /#.*$/;
+
+var historyApi = {
+	decodeFragment: function decodeFragment(fragment) {
+		fragment = history.getFragment(fragment || '');
+		fragment = fragment.replace(pathStripper, '');
+		return history.decodeFragment(fragment);
+	},
+
+	// supports passing options to the callback
+	// by using new version of loadUrl	
+	navigate: function navigate(fragment, opts) {
+
+		var options = opts === true ? { trigger: true } : _.isObject(opts) ? _.clone(opts) : {};
+
+		var trigger = options.trigger;
+
+		delete options.trigger;
+
+		var decodedFragment = this.decodeFragment(fragment);
+		if (history.fragment == decodedFragment) {
+			return;
+		}
+
+		history.navigate(fragment, options);
+
+		if (trigger) {
+			return historyApi.loadUrl(fragment, opts);
+		}
+	},
+	execute: function execute(fragment, opts) {
+		fragment = history.fragment = history.getFragment(fragment);
+
+		var executed = historyApi.executeHandler(fragment, opts);
+		if (!executed) {
+			routeErrorHandler.handle('not:found', opts.context, [fragment]);
+		}
+		return executed;
+	},
+
+
+	// original loadUrl does not pass options to the callback
+	// and this one does
+	loadUrl: function loadUrl(fragment) {
+		var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+
+		// If the root doesn't match, no routes can match either.
+		if (!history.matchRoot()) return false;
+		return historyApi.execute(fragment, opts);
+
+		// fragment = history.fragment = history.getFragment(fragment);
+
+		// let executed = historyApi.executeHandler(fragment, opts);
+		// if (!executed) {
+		// 	errorHandler.handle('not:found', opts.context, [fragment]);
+		// }
+		// return executed;
+	},
+
+
+	// default test handler
+	//TODO: think about constraints check
+	testHandler: function testHandler(handler, fragment) {
+		return handler.route.test(fragment);
+	},
+
+
+	//also accepts test function, if you wish test handlers by your own
+	findHandler: function findHandler(fragment, customTest) {
+		var test = _.isFunction(customTest) ? customTest : historyApi.testHandler;
+		fragment = history.getFragment(fragment);
+		return _.filter(history.handlers || [], function (handler) {
+			return test(handler, fragment);
+		})[0];
+	},
+	executeHandler: function executeHandler(fragment) {
+		var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+		var resultContext = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+
+		var handler = historyApi.findHandler(fragment, opts.testHandler);
+
+		handler && (resultContext.value = handler.callback(fragment, opts));
+
+		return !!handler;
+	},
+
+	// this start replaces native history loadUrl and test handler
+	start: function start(options) {
+
+		if (history.loadUrl !== historyApi.loadUrl) history.loadUrl = historyApi.loadUrl;
+
+		var result = history.start(options);
+
+		return result;
+	},
+	isStarted: function isStarted() {
+		return !!history.started;
+	},
+	getUrlPath: function getUrlPath() {
+		return history.fragment.split('?')[0];
+	},
+	changeUrlQueryString: function changeUrlQueryString(qs) {
+		var url = this.getUrlPath();
+		if (qs) {
+			url = [url, qs].join('?');
+		}
+		return this.navigate(url, { trigger: false });
+	}
+};
+
+var Watcher = mix(BaseClass).with(Events).extend({
+	constructor: function constructor() {
+		BaseClass.apply(this, arguments);
+		this.isWatching = false;
+		this.entries = [];
+	},
+	start: function start() {
+		if (this.isWatching) return;
+		this.isWatching = true;
+		this.listenTo(history, 'route', this.onRoute);
+		this.listenTo(history, 'backroute', this.onBackRoute);
+	},
+	stop: function stop() {
+		this.stopListening(history);
+		this.entries.length = 0;
+		this.isWatching = false;
+	},
+
+	isActionContext: function isActionContext(cntx) {
+		return _.isObject(cntx) && _.isString(cntx.fragment);
+	},
+	hasElements: function hasElements() {
+		return this.entries.length > 0;
+	},
+	canGoBack: function canGoBack() {
+		return this.hasElements();
+	},
+	onRoute: function onRoute(actionContext) {
+
+		if (!this.isActionContext(actionContext)) return;
+
+		if (this.isActionContext(this.lastElement)) {
+			this.entries.push(this.lastElement);
+		}
+		this.lastElement = actionContext;
+	},
+	onBackRoute: function onBackRoute(actionContext) {
+		if (!this.isActionContext(actionContext) || !this.isActionContext(actionContext.gobackContext)) return;
+
+		var lookFor = actionContext.gobackContext;
+		var index$$1 = this.entries.indexOf(lookFor);
+		if (index$$1 >= 0) {
+			this.entries = this.entries.slice(0, index$$1);
+			this.lastElement = lookFor;
+		}
+	},
+	goBack: function goBack() {
+		if (!this.canGoBack()) return;
+		var last = _.last(this.entries);
+		historyApi.navigate(last.fragment, { trigger: true, routeType: 'backroute', gobackContext: last });
+	}
+});
+
+var historyWatcher = new Watcher();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var PageRouter = Router$1.extend({
+
+	classicMode: false,
+	isRouterHoldsActions: false,
+	isRouteChaining: false,
+	callbackAsPromises: true,
+	routeCaseInsensitive: true,
+
+	setTitleOnPageStart: true,
+
+	registerPageRoutes: function registerPageRoutes(page) {
+		var _this = this;
+
+		var contexts = page.getRoutesContexts({ reverse: true });
+		_.each(contexts, function (context) {
+			var callback = function callback() {
+				for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+					args[_key] = arguments[_key];
+				}
+
+				return _this.startPage.apply(_this, [page].concat(args));
+			};
+			_this.addRoute(context.route, context.name, callback);
+		});
+	},
+	handleError: function handleError(process, action$$1) {
+		var args = void 0,
+		    error = void 0;
+
+		if (process instanceof Process) {
+			args = [].slice.call(process.errors);
+			error = args.shift();
+			args.push(action$$1);
+		} else {
+			error = process;
+			args = [action$$1];
+		}
+
+		routeErrorHandler.handle(error, this, args);
+	},
+	startPage: function startPage(page) {
+		var _this2 = this;
+
+		for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+			args[_key2 - 1] = arguments[_key2];
+		}
+
+		return this._beforePageStart(page).then(function () {
+			return page.start.apply(page, _toConsumableArray(args));
+		}).then(function () {
+			return _this2._afterPageStart.apply(_this2, [page].concat(_toConsumableArray(args)));
+		});
+	},
+	_beforePageStart: function _beforePageStart() {
+		this.beforePageStart();
+		if (this.previousPage && this.previousPage.isStarted()) return this.previousPage.stop();else return Promise.resolve();
+	},
+	beforePageStart: function beforePageStart() {},
+	_afterPageStart: function _afterPageStart(page) {
+		this.previousPage = page;
+		this.afterPageStart(page);
+		this._setPageTitle(page);
+	},
+	afterPageStart: function afterPageStart() {},
+	_setPageTitle: function _setPageTitle(page) {
+		if (!this.getOption('setTitleOnPageStart')) {
+			return;
+		}
+		var title = page.getTitle();
+		this.setPageTitle(title, page);
+	},
+
+
+	//implement your set title logic here
+	//accepts: title, page
+	setPageTitle: function setPageTitle(title) {
+		document.title = title;
+	},
+	restartLastAttempt: function restartLastAttempt() {
+		if (this.lastAttempt) return this.lastAttempt.restart();
+	}
+});
+
+var RoutesMixin = {
+	initializeRoutes: function initializeRoutes() {
+		if (this.initializeRouter()) {
+			this._buildRoutesContexts();
+		}
+	},
+	initializeRouter: function initializeRouter() {
+		if (this.getOption('shouldCreateRouter') && !this.router) {
+			this.router = this._createRouter();
+			this._shouldRegisterAllRoutes = true;
+		}
+
+		if (this.getOption('shouldRegisterAllRoutes')) {
+			this._shouldRegisterAllRoutes = true;
+		}
+
+		return !!this.router;
+	},
+	_createRouter: function _createRouter() {
+		var Router$$1 = this.getOption('Router') || PageRouter;
+		var options = _.extend({}, this.getOption('routerOptions'));
+		return new Router$$1(options);
+	},
+	registerAllRoutes: function registerAllRoutes() {
+		if (!this._shouldRegisterAllRoutes) return;
+
+		var pages = this.getAllChildren({ reverse: true, includeSelf: true, force: true });
+
+		var router = this.router;
+		_(pages).each(function (page) {
+			return router.registerPageRoutes(page);
+		});
+	},
+	_buildRoutesContexts: function _buildRoutesContexts() {
+		var _this = this;
+
+		var routes = this.getOption('routes', { args: [this] });
+		if (routes == null) return;
+		if (_.isString(routes)) routes = [routes];
+
+		var result = [];
+		var config = this.getRoutesConfig();
+		_(routes).each(function (route, index$$1) {
+			var context = _this._normalizeRoutesContextRoute(route, index$$1, config);
+			_.isObject(context) && result.push(context);
+		});
+		this.routesContext = result;
+		return this.routesContext;
+	},
+	_normalizeRoutesContextRoute: function _normalizeRoutesContextRoute(arg, index$$1) {
+		var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+		if (arguments.length < 2) {
+			config = this.getRoutesConfig();
+		}
+		var context = { page: this };
+		if (arg == null) return;
+		if (_.isString(arg)) {
+			_.extend(context, { route: arg, rawRoute: arg });
+		} else if (_.isFunction(arg)) {
+			arg = arg.call(this, this, index$$1);
+			return this._normalizeRoutesContextRoute(arg, index$$1);
+		} else {
+			_.extend(context, arg);
+		}
+		var name = _.isString(index$$1) && index$$1 || context.name || context.route || _.uniqueId('route');
+		context.name = name;
+
+		if (_.isNumber(index$$1) && context.order == null) context.order = index$$1;
+
+		if (!context.rawRoute) context.rawRoute = context.route;
+
+		if (config.relative && config.parentContext && config.parentContext.route) context.route = config.parentContext.route + '/' + context.route;
+
+		context.getUrl = function () {
+			var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+			return this.route.replace(/:([^/?]+)/, function (found, group) {
+				return data[group];
+			});
+		};
+
+		return context;
+	},
+	getRoutesConfig: function getRoutesConfig() {
+		var config = _.extend({
+			relative: this.getOption('relativeRoutes', { args: [this] }),
+			parent: this.parent,
+			parentContext: this.parent && _.isFunction(this.parent.getMainRouteContext) && this.parent.getMainRouteContext()
+		}, this.getOption('routesConfig', { args: [this] }));
+
+		return config;
+	},
+	getRoutesContexts: function getRoutesContexts() {
+		var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		var clone = opts.clone,
+		    reverse = opts.reverse;
+
+		var result = this.routesContext || [];
+		if (clone || reverse) result = [].slice.call(result);
+		if (reverse) result.reverse();
+		return result;
+	},
+	getMainRouteContext: function getMainRouteContext() {
+
+		if (this.mainRouteContext) return this.mainRouteContext;
+		this.mainRouteContext = _(this.getRoutesContexts()).chain().sortBy(function (a, b) {
+			return comparator([[b, a, function (c) {
+				return c.main;
+			}], [a, b, function (c) {
+				return c.order;
+			}]]);
+		}).take(1).value()[0];
+
+		return this.mainRouteContext;
+	}
+};
+
+function _toConsumableArray$1(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var BasePage = mix(newObject).with(childrenableMixin, startableMixin, RoutesMixin);
+
+var Page = BasePage.extend({
+	constructor: function constructor() {
+		var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+		BasePage.apply(this, arguments);
+
+		//root and parent is childrenable options
+		this.mergeOptions(opts, ['app', 'router', 'canNotStart', 'onStart', 'onBeginStart', 'onBeforeStart', 'onEndStart', 'onStop', 'onBeginStop', 'onBeforeStop', 'onEndStop']);
+
+		// resides in routes-mixin
+		this.initializeRoutes();
+
+		// resides in ChildrenableMixin
+		this.initializeChildren();
+
+		// resides in routes-mixin
+		this.registerAllRoutes();
+
+		this.initializeEvents();
+	},
+	getOption: function getOption$$1() {
+		for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+			args[_key] = arguments[_key];
+		}
+
+		return getOption.apply(undefined, [this].concat(_toConsumableArray$1(args)));
+	},
+	getLabel: function getLabel(data) {
+		var result = this.getOption('label', { args: [this, data] });
+		return result;
+	},
+	getTitle: function getTitle(data) {
+		var result = this.getOption('title', { args: [this, data] });
+		return result || this.getLabel(data);
+	},
+	getMenuLabel: function getMenuLabel(data) {
+		var result = this.getOption('menuLabel', { args: [this, data], default: this.getLabel(data) });
+		return result;
+	},
+	buildChildOptions: function buildChildOptions(options) {
+		var root = this.getRoot();
+		var defs = {
+			root: root,
+			parent: this.parent,
+			router: this.router,
+			app: this.app
+		};
+		var result = _.extend(defs, options);
+		return result;
+	},
+	getSiblings: function getSiblings() {
+		var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+
+		var parent = this.getParent();
+		var options = _.extend({ exclude: [this] }, opts);
+		return parent && parent.getChildren(options) || [];
+	},
+	getHashes: function getHashes(data) {
+		var page = this;
+		var parentHash = false;
+		if (this.isEntityPage) {
+			page = page.getParent();
+			parentHash = true;
+		}
+		return this._getPageHashes(page, data, parentHash);
+	},
+	_getPageHashes: function _getPageHashes(page, data, isParentHash) {
+		var parent = page.getParent();
+		var root = page.getRoot();
+
+		return {
+			isParentHash: isParentHash,
+			path: page.getPathHash(data),
+			this: page.getHash(data),
+			root: root && root.getHash && root.getHash(data) || undefined,
+			parent: parent && parent.getHash && parent.getHash(data) || undefined,
+			children: page.getChildrenHashes(data),
+			siblings: page.getSiblingsHashes(data)
+		};
+	},
+	getPathHash: function getPathHash(data) {
+		var self = this.getHash(data);
+		var path = [self];
+		var parent = this.getParent();
+		if (parent && _.isFunction(parent.getPathHash)) {
+			path.unshift.apply(path, _toConsumableArray$1(parent.getPathHash(data)));
+		}
+		return path;
+	},
+	getChildrenHashes: function getChildrenHashes(data) {
+		return this.getChildren({ map: function map(i) {
+				return i.getHash(data);
+			}, visible: true });
+	},
+	getSiblingsHashes: function getSiblingsHashes(data) {
+		return this.getSiblings({ map: function map(i) {
+				return i.getHash(data);
+			}, visible: true });
+	},
+	getRoot: function getRoot() {
+		if (this.root === true) {
+			return this;
+		} else {
+			return this.root;
+		}
+	},
+	getAllPages: function getAllPages() {
+		var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+
+		var options = _.extend({}, opts, { includeSelf: true });
+		delete options.map;
+		var pages = this.getRoot().getAllChildren(options);
+
+		if (_.isFunction(opts.map)) {
+			return _(pages).chain().map(opts.map).filter(function (f) {
+				return !!f;
+			}).value();
+		} else {
+			return pages;
+		}
+	},
+	getAllHashes: function getAllHashes() {
+		var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+		var options = _.extend({ map: function map(i) {
+				return i.getHash();
+			}, visible: true }, opts);
+		return this.getAllPages(options);
+	},
+	getHash: function getHash(data) {
+		var context = this.getMainRouteContext();
+
+		if (!_.isObject(context)) return;
+
+		var parent = this.getParent();
+		var parentCid = parent && parent.cid || undefined;
+		return {
+			cid: this.cid,
+			parentCid: parentCid,
+			label: this.getMenuLabel(data),
+			order: this.order,
+			route: context.route,
+			url: data ? context.getUrl(data) : context.route
+		};
+	},
+	_childFilter: function _childFilter(item, index$$1) {
+		var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+		var base = BasePage.prototype._childFilter;
+		if (base && !base.apply(this, arguments)) return;
+
+		var visible = opts.visible;
+
+
+		if (item.isEntityPage) return;
+
+		if (visible && (item.visible === false || item.hidden === true)) return;
+
+		return item;
+	},
+	initializeEvents: function initializeEvents() {
+		var _this = this;
+
+		if (this._triggerOnParentInitiallized) return;
+
+		var triggersOn = [];
+		if (this.app) {
+			triggersOn.push(this.app);
+		}
+		if (this.router) {
+			triggersOn.push(this.router);
+		}
+		var events = ['start', 'stop'];
+		_.each(events, function (event) {
+			_this.on(event, function () {
+				for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+					args[_key2] = arguments[_key2];
+				}
+
+				_.each(triggersOn, function (parent) {
+					parent.triggerMethod.apply(parent, ['page:' + event, _this].concat(args));
+				});
+			});
+		});
+
+		this._triggerOnParentInitiallized = true;
+	},
+	getView: function getView(opts) {
+		var options = _.extend({ model: this.model, collection: this.collection, page: this }, opts);
+		return this.builView(options);
+	},
+
+	//good place to override build options, or build itself
+	builView: function builView(options) {
+		return this._buildViewByKey(options);
+	},
+	_buildViewByKey: function _buildViewByKey(options) {
+		return buildViewByKey(this, 'Layout', { options: options });
+	},
+	getStartPromises: function getStartPromises() {
+		var _this2 = this;
+
+		var promises = this.getOption('startPromises', { args: [this] });
+		if (!promises) return;
+
+		return _.map(promises, function (item) {
+			if (_.isFunction(item)) {
+				return item.call(_this2, _this2);
+			} else {
+				return item;
+			}
+		});
+	},
+	getStopPromises: function getStopPromises() {
+		var _this3 = this;
+
+		var promises = this.getOption('stopPromises', { args: [this] });
+		if (!promises) return;
+
+		return _.map(promises, function (item) {
+			if (_.isFunction(item)) {
+				return item.call(_this3, _this3);
+			} else {
+				return item;
+			}
+		});
+	}
+});
+
+var PagedApp = App.extend({
+	historyWatcher: false,
+	Router: PageRouter,
+
+	constructor: function constructor() {
+
+		this._pages = [];
+		App.apply(this, arguments);
+		this._initRouteErrors();
+		this._initPageListeners();
+	},
+	_initRouteErrors: function _initRouteErrors() {
+		var handlers = this.getOption('routeErrors', { args: [this] });
+		if (!_.isObject(handlers)) return;
+		routeErrorHandler.setHandlers(handlers, this);
+	},
+	_initPageListeners: function _initPageListeners() {
+		this.on('start', this._buildPages);
+		this.on('pages:ready', this._startHistory);
+		this.on('page:start', this._onPageStart);
+		this.on('page:stop', this._onPageStop);
+	},
+	_startHistoryWatcher: function _startHistoryWatcher() {
+		if (!this.getOption('historyWatcher')) return;
+		historyWatcher.start();
+	},
+	_startHistory: function _startHistory() {
+		if (historyApi.isStarted()) return;
+
+		this._startHistoryWatcher();
+
+		var options = this.getOption('startHistory');
+		if (!options) {
+			return;
+		}
+		if (options === true) {
+			options = { pushState: false };
+		} else if (!_.isObject(options)) {
+			return;
+		}
+
+		this.triggerMethod('before:history:start', result);
+
+		var result = historyApi.start(options);
+
+		this.triggerMethod('history:start', result);
+	},
+	_buildPages: function _buildPages() {
+		this.triggerMethod('before:pages:ready');
+		this.buildPages();
+		this.triggerMethod('pages:ready');
+	},
+	buildPages: function buildPages() {
+
+		if (this.rootPage instanceof Page) return;
+
+		this.triggerMethod('before:router:create');
+		this.router = this.buildRouter();
+		this.triggerMethod('router:create', this.router);
+
+		var RootPage = this.getOption('RootPage');
+		if (isClass(RootPage, Page)) {
+			this.rootPage = new RootPage({ router: this.router, shouldRegisterAllRoutes: true, app: this });
+		}
+	},
+	buildRouter: function buildRouter() {
+		if (this.router instanceof PageRouter) return this.router;
+		return buildByKey(this, 'Router', { ctor: PageRouter });
+	},
+	_onPageStart: function _onPageStart() {
+		this.showPage.apply(this, arguments);
+	},
+
+	showPage: _.noop,
+	_onPageStop: function _onPageStop() {
+		this.hidePage.apply(this, arguments);
+	},
+
+	hidePage: _.noop
+});
+
+var buttonMixin = Base => {
+	if (Base == null) {
+		Base = View$1;
+	}
+	return Base.extend({
+
+		triggerNameEvent: true,
+		stopEvent: true,
+		leftIcon: true,
+		rightIcon: true,
+		forceText: true,
+		beforeClickIsAlwaysPromise: true,
+		constructor(options){
+			Base.apply(this, arguments);
+			this.mergeOptions(options, ['name']);
+		},
+
+		tagName:'button',
+		//template: _.template('<i></i><span><%= text %></span><i></i>'),
+		getTemplate(){
+			let html = [];
+			let icon = '<i></i>';
+			
+			if (this.getOption('leftIcon')) {
+				html.push(icon);
+			}
+			
+			let forceText = this.getOption('forceText');
+			if (this.getText() || forceText) {
+				html.push('<span><%= text %></span>');
+			}
+
+			if (this.getOption('rightIcon')) {
+				html.push(icon);
+			}
+			return _.template(html.join(''));
+		},
+		events(){
+			if(this.getOption('noevent')){
+				return;
+			}
+			return {
+				'click'(e) {
+					let stop = this.getOption('stopEvent');
+					if (stop) {
+						e.stopPropagation();
+						e.preventDefault();
+					}
+
+					let before = this.beforeClick();
+					if (before && before.then) {
+						before.then(
+							data => this.triggerClick(data, event),
+							error => this.triggerError(error, event)
+						);
+					} else {
+						this.triggerClick(before, event);
+					}
+					/*
+					this.beforeClick().then(
+						data => {
+							this.triggerMethod('click', data, e, this.name, this);
+							if (this.name) {
+								this.triggerMethod('click:' + this.name, data, e, this);
+							}
+						},
+						error => {
+							this.triggerMethod('click:fail', error, this.name, e, this);
+							if (this.name) {
+								this.triggerMethod('click:'+this.name+':fail', error, e, this);
+							}
+						}
+					);
+					*/
+				}
+			};
+		},
+		beforeClick(){
+			let result = this.triggerMethod('before:click');
+			if(result && _.isFunction(result.then) ) {
+				return result;
+			} else {
+				if (this.getOption('beforeClickIsAlwaysPromise')) {
+					return Promise.resolve(result);
+				} else {
+					return result;
+				}
+			}
+		},
+		triggerClick(data, event){
+			let options = {
+				event,
+				name: this.name,
+				buttonView: this,
+			};
+			this.triggerMethod('click', data, options);
+			if (this.name) {
+				this.triggerMethod('click:' + this.name, data, options);
+			}
+		},
+		triggerError(error, event){
+			let options = {
+				event,
+				name: this.name,
+				buttonView: this,
+			};			
+			this.triggerMethod('click:fail', error, options);
+			if (this.name) {
+				this.triggerMethod('click:'+this.name+':fail', error, options);
+			}
+		},
+		getText(){
+			return this.getOption('text');
+		},
+		templateContext(){
+			return {
+				text: this.getText()
+			};
+		},
+		disable(){
+			this.$el.prop('disabled', true);
+		},
+		enable(){
+			this.$el.prop('disabled', false);
+		},
+	});
+};
+
+var buttonMixin$1 = buttonMixin(ExtView);
+
+function getTriggerMethod(context){
+	if(!context) { return () => {}; }
+	return _.isFunction(context.triggerMethod) ? context.triggerMethod
+		: _.isFunction(context.trigger) ? context.trigger
+			: () => {};
+}
+
+function ensureError(error, value){
+	if(error instanceof Error){
+		throw error;
+	}
+	return arguments.length > 1 ? value : error;
+}
+
+
+var ControlMixin = Base => Base.extend({
+
+	isControl: true,
+	validateOnReady: false,
+
+	constructor(options){		
+		this._initControl(options);
+		Base.apply(this, arguments);
+		if (this.getOption('validateOnReady')) {
+			this.once('control:ready', () => {
+				this.validate().catch(() => {});
+			});
+		}
+
+		this.valueOptions = this.getOption('valueOptions') || {};
+	},
+
+
+
+	_onControlDestroy(){
+		let parent = this.getParentControl();
+		if (parent && _.isFunction(parent._removeChildControl)) {
+			parent._removeChildControl(this);
+		}
+		let children = this.getChildrenControls();
+		if (children) {
+			_.each(children, child => child._removeParentControl());
+			children.length = 0;
+		}
+		delete this._cntrl;
+	},
+	_removeChildControl(control){
+		this.off(control);
+		let children = this.getChildrenControls();
+		if (!children.length) { return; }
+		let index = children.indexOf(control);
+		if (index === -1) return;
+		children.splice(index, 1);
+	},
+	_addChildControl(control){
+		let controlName = control.getControlName();
+		let children = this.getChildrenControls();
+		let found = _.find(children, child => child.getControlName() === controlName);
+		!found && children.push(control);
+	},
+	_removeParentControl(){
+		delete this._cntrl.parent;
+	},
+
+
+
+	_initControl(options = {}){
+		if (this._controlInitialized) { return; }
+
+		this._cntrl = {};
+		let name = takeFirst('controlName', options, this) || 'control';
+		this._cntrl.name = name;
+
+		let value = takeFirst('value', options, this);
+		value = this._clone(value);
+		this.initControlValue(value);
+		this.initParentControl(options);
+
+		this.once('destroy', this._onControlDestroy);
+
+		this._controlInitialized = true;
+	},
+	initParentControl(options){
+		let parent = takeFirst('proxyTo', options, this) || takeFirst('parentControl', options, this);
+		this.setParentControl(parent);
+	},
+	setParentControl(parent){
+		this._cntrl.parent = parent;
+		if (parent && _.isFunction(parent._addChildControl)) {
+			parent._addChildControl(this);
+		}
+	},
+	initControlValue(value){
+		this._cntrl.initial = value;
+		this._cntrl.value = value;
+	},
+	getControlName(){
+		return this._cntrl.name;
+	},
+
+	isSameControlValue(value){
+		let current = this.getControlValue();
+		return this.isValid() && compareObjects(current, value);
+	},
+
+	getControlValue(key, options = {}){
+		
+		if(_.isObject(key)) {
+			options = key;
+			key = undefined;
+		}
+		let { notValidated, clone } = options;
+		let valueKey = notValidated ? 'notValidated' : 'value';
+		let value = this._cntrl[valueKey];
+		if (key != null) {
+			value = getByPath(value, key);
+		} else {
+			value = clone ? this._clone(value) : value;
+		}
+		if (_.isFunction(options.transform)){
+			value = options.transform.call(this, value);
+		}
+		return value;
+	},
+
+	setControlValue(value, options = {}){
+		let  { key, notValidated } = options;
+		value = this._prepareValueBeforeSet(value, { key });
+		const resolve = Promise.resolve(value);
+		if (this.isSameControlValue(value)) { return resolve; }
+
+		this._cntrl.notValidated = value;
+
+		if (notValidated) { return resolve; }
+		return this._setControlValue(value, options);
+	},
+
+	_prepareValueBeforeSet(value, { key } = {}){
+		value = this.prepareValueBeforeSet(value);
+		if (key == null) { return value; }
+
+		let current = this.getControlValue({ notValidated: true, clone: true }) || {};
+		setByPath(current, key, value);
+		return current;
+	},
+
+	//override this if you need to modify value before set
+	prepareValueBeforeSet: value => value,
+
+	_setControlValue(value, options = {}) {
+		let { skipValidation } = options;
+		if (skipValidation) {
+			return this._onSetControlValueValidateSuccess(value, options);
+		}
+		return this._validate(value, options)
+			.then(
+				() => this._onSetControlValueValidateSuccess(value, options), 
+				error => this._onSetControlValueValidateFail(error, value, options)
+			);
+	},
+	_onSetControlValueValidateSuccess(value, options){
+		this._cntrl.previous = this._cntrl.value;
+		this._cntrl.value = value;
+		this._cntrl.isDone = false;
+		this._tryTriggerEvent('change', [value], options);
+		return Promise.resolve(value);
+	},
+
+	_onSetControlValueValidateFail(error, value, options){
+		this._tryTriggerEvent('change:fail', [value, error], options);
+		return ensureError(error, value);
+	},
+
+	isValid(){
+		return this._cntrl.isValid !== false;
+	},
+
+	validate(options = {}){
+
+		let notValidated = !this.isValid();
+		let value = this.getControlValue({ notValidated });
+		let promise = this._validate(value, options);
+		let _catch = options.catch;
+
+		if (_catch === false) {
+			return promise;
+		} else if(_.isFunction(_catch)) {
+			return promise.catch(_catch);
+		} else {
+			return promise.catch(ensureError);
+		}
+	},
+	_validate(value, options){
+
+		let validate = this._validatePromise(value, options);
+
+		return validate.then(
+			() => this._onControlValidateSuccess(value, options),
+			error => this._onControlValidateFail(error, value, options)
+		);
+	},
+	_validatePromise(value, options){
+		
+		const { skipChildValidate } = options;
+		const isControlWrapper = betterResult(this, 'isControlWrapper', { args:[this]});
+
+		
+		return new Promise((resolve, reject) => {
+			let childrenErrors = {
+				children: {}
+			};
+			let childrenPromise = this._validateChildrenControlsPromise({ skipChildValidate, isControlWrapper }, childrenErrors);
+
+			childrenPromise.then(() => {
+
+				if (_.size(childrenErrors.children)) {
+					reject(childrenErrors.children);
+					return;
+				} else if (childrenErrors.wrapped) {
+					reject(childrenErrors.wrapped);
+					return;
+				}
+			
+				let promise = this._validateControlPromise(value, options);
+
+				promise.then(
+					() => {
+						resolve(value);
+					},
+					error => {
+						reject(error);
+					}
+				);
+
+			});
+		});		
+	},
+	_validateControlPromise(value, options){
+		let validate = this.getOption('controlValidate', { force: false });
+				
+		//if there is no validation defined, resolve
+		if (!_.isFunction(validate)) {
+			
+			return Promise.resolve(value);
+		}
+
+		let values = this.getParentControlValue({ notValidated: true });
+		let validateResult = validate.call(this, value, values, options);
+
+		let promise = Promise.resolve(value);
+		if (validateResult && validateResult.then) {
+			promise = validateResult;
+		} else if (validateResult) {
+			promise = Promise.reject(validateResult);
+		}
+		return promise;
+	},
+	_validateChildrenControlsPromise({ isControlWrapper, skipChildValidate} = {}, errors = {}){
+
+		let children = this.getChildrenControls();
+		let childrenPromise = Promise.resolve();
+		if (!children.length) return childrenPromise;
+
+		return _.reduce(children, (finaly, child) => {
+			let control = child.getControlName();
+
+			finaly = finaly.then(() => {
+
+				if (!child.validate || (skipChildValidate && control == skipChildValidate)) {
+					return Promise.resolve();
+				}
+				let validateResult = child.validate({ stopPropagation: true, catch: false });
+
+				return validateResult;
+			}).catch(error => {
+
+				if(isControlWrapper){
+					errors.wrapped = error;
+				} else {
+					errors.children[control] = error;
+				}
+				return Promise.resolve();
+			});
+			return finaly;
+		}, childrenPromise);		
+
+	},
+
+	_onControlValidateSuccess(value, options){
+		this.makeValid(value, _.extend(options, { noSet: true }));
+		return Promise.resolve(value);
+	},
+	makeValid(value, options = {}){
+		this._cntrl.isValid = true;
+		if(!options.noSet && !this.isSameControlValue(value)){
+			this._setControlValue(value, { silent: true, skipValidation: true });
+		}
+		this._tryTriggerEvent('valid', [value], options);
+	},
+	_onControlValidateFail(error, value, options){
+		this.makeInvalid(error, value, options);
+		return Promise.reject(error);
+	},
+	makeInvalid(error, value, options){
+		this._cntrl.isValid = false;
+		this._tryTriggerEvent('invalid', [value, error], options);
+	},
+
+
+
+
+
+
+
+
+
+
+	getParentControl() {
+		return this._cntrl.parent;
+	},
+	getParentControlValue(options) {
+
+		let parent = this.getParentControl();
+		if (!parent || !_.isFunction(parent.getControlValue)) {
+			return this.getOption('allValues');
+		}
+		if (betterResult(parent, 'isControlWrapper', { args:[this]})) {
+			return parent.getParentControlValue(options);
+		} else {
+			return parent.getControlValue(options);
+		}
+	},
+
+	getChildrenControls(){
+		if(!this._cntrl.children) {
+			this._cntrl.children = [];
+		}
+		return this._cntrl.children;
+	},
+	handleChildControlEvent(event, controlName, ...args) {
+		let childEvent = controlName + ':' + event;
+		let trigger = getTriggerMethod(this);
+
+		let cce = this.getOption('childControlEvents', { args: [this] }) || {};
+		let def = this.defaultChildControlEvents || {};
+		if(!this._debouncedChildControlEvents) {
+			this._debouncedChildControlEvents = {};
+		}
+		let dcce = this._debouncedChildControlEvents;
+
+		let defHandler = def[event];
+		let handler = cce[childEvent];
+		let handlerArguments = [];
+		let handlerName;
+		if (_.isFunction(handler)) {
+			handlerArguments = args;
+			handlerName = childEvent;
+		} else if(_.isFunction(defHandler)){
+			handlerName = '_default:' + event;
+			handler = defHandler;
+			handlerArguments = [controlName, ...args];
+		} else {
+			if (controlName != 'control') {
+				trigger.call(this, childEvent, ...args);
+			}
+			return;
+		}
+		
+		let delay = this.getOption('debounceChildControlEvents');
+		if(_.isNumber(delay) && delay > 0){
+			if(!dcce[handlerName]){
+				dcce[handlerName] = _.debounce(handler, delay);
+			}
+			handler = dcce[handlerName];
+		}
+
+		let handlerResult = handler.apply(this, handlerArguments);
+		if(handlerResult && handlerResult.then) {
+			handlerResult.then(() => {
+				controlName != 'control' && trigger.call(this, childEvent, ...args);
+			});
+		}
+		
+	},
+
+	defaultChildControlEvents:{
+		'change'(controlName, value){
+			let isControlWraper = this.getOption('isControlWrapper');
+			isControlWraper && (controlName = undefined);
+			this.setControlValue(value, { key: controlName, skipChildValidate: controlName });
+		},
+		'done'(controlName, value){
+			let isControlWraper = this.getOption('isControlWrapper');
+			isControlWraper && (controlName = undefined);
+			let setPromise = this.setControlValue(value, { key: controlName, skipChildValidate: controlName });
+			if (isControlWraper) {
+				setPromise = setPromise.then(() => {
+					this.controlDone();
+					return Promise.resolve();
+				});
+			}
+			return setPromise;
+		},
+		'invalid'(controlName, value, error){
+			if(this.getOption('isControlWrapper')){
+				controlName = undefined;
+			}
+			this.setControlValue(value, { key: controlName, silent: true, notValidated: true });
+			this.makeInvalid(error, this.getControlValue({ notValidated: true }));
+		},
+	},
+
+	controlDone(){
+		if (!this._cntrl.isValid || this._cntrl.isDone) { return; }
+		let value = this.getControlValue();
+		this._cntrl.isDone = true;
+		this._tryTriggerEvent('done', [value]);
+	},
+
+
+	/*
+		helpers
+	*/
+	_clone(value){
+		if(_.isArray(value))
+			return value.slice(0);
+		else if(_.isObject(value)) {
+			return cloneValue(value);
+		} else
+			return value;
+	},
+	_tryTriggerEvent(name, args = [], { silent, stopPropagation } = {}){
+		if (silent) { return; }
+		let controlName = this.getControlName();
+		let event = 'control:' + name;
+		let namedEvent = controlName + ':' + name;
+
+		let trigger = getTriggerMethod(this);
+		let parent = this.getParentControl();
+		
+		if (stopPropagation || !parent) { 
+			trigger.call(this, event, ...args);
+			return; 
+		}
+
+		if (_.isFunction(parent.handleChildControlEvent)) {
+			parent.handleChildControlEvent(name, controlName, ...args);
+		} else {
+			let parentTrigger = getTriggerMethod(parent);
+			parentTrigger.call(parent, namedEvent, ...args);
+		}
+
+		trigger.call(this, event, ...args);
+	},
+	makeControlReady(){
+		let trigger = getTriggerMethod(this);
+		trigger.call(this, 'control:ready');
+	},
+
+}, { ControlMixin: true });
+
+var controlViewMixin = Base => {
+	if (Base == null) {
+		Base = CollectionView;
+	}
+
+	if (!isClass(Base, CollectionView)) {
+		throw new Error('controlView mixin can be applied only on marionette CollectionView');
+	}
+
+	let Mixed = Base;
+
+	if (Mixed.ControlViewMixin) {
+		return Mixed;
+	}
+
+	if (!Mixed.ControlMixin) {
+		Mixed = ControlMixin(Mixed);
+	}
+
+	if (!Mixed.CssClassModifiersMixin) {
+		Mixed = cssClassModifiersMixin(Mixed);
+	}
+
+	if (!Mixed.CustomsMixin) {
+		Mixed = customsMixin(Mixed);
+	}
+
+
+	return Mixed.extend({
+
+		renderAllCustoms: true,
+		isControlWrapper: true,
+		skipFirstValidationError: true,
+		shouldShowError: false,
+		validateOnReady: false,
+		
+		constructor(){
+			Mixed.apply(this, arguments);
+			this._setControlValidInvalidListeners();
+			this.addCssClassModifier('control-wrapper');
+		},
+
+		_setControlValidInvalidListeners(){
+			if(this._controlValidInvalidListeners) { return true; }
+
+			this.on({
+				'control:valid': this._onControlValid,
+				'control:invalid': this._onControlInvalid
+			});
+			if(this.getOption('validateOnReady')){
+				this.once('customs:render', () => this.makeControlReady());
+			}			
+
+			this._controlValidInvalidListeners = true;
+		},
+
+		getCustoms(){
+			let customs = [];
+			if (this.getOption('isControlWrapper')) {
+				customs.push(this.getControlView());
+			} else {
+				customs.push(...this._customs);
+			}
+			customs = this.injectSystemViews(customs);
+			return customs; 
+			//this._prepareCustoms(customs);
+		},
+
+		_setupCustom(view){
+			this._setupChildControl(view);
+			this.setupCustom(view);
+		},
+		_setupChildControl(view){
+			if(_.isFunction(view.setParentControl)) {
+				view.setParentControl(this);
+			}
+			this.setupChildControl(view);
+		},
+		setupChildControl: _.noop,
+		injectSystemViews(customs = []){
+			customs.unshift(this.getHeaderView());
+			customs.push(
+				this.getErrorView(),
+				this.getFooterView()	
+			);
+			return customs;
+		},
+
+
+
+
+		getErrorView(){
+			if (!this.getOption('shouldShowError')) { return; }
+			if (this.getOption('showValidateError', {force:false})) { return; }
+			this._errorView = this.buildErrorView();
+			return this._errorView;
+		},
+		buildErrorView(){
+			return buildViewByKey(this, 'errorView');
+		},
+
+
+
+		getHeaderView(){			
+			return this.buildHeaderView({ tagName: 'header' });
+		},
+		buildHeaderView(options){
+			return this._buildNestedTextView('header', options);
+		},
+		_buildNestedTextView(key, options){
+			let TextView = this.getOption('TextView');
+			let buildText;
+			if (!TextView) {
+				buildText = (text, opts) => new View$1(_.extend({}, opts, { template: () => text }));
+			}
+			return buildViewByKey(this, key, { TextView, buildText, options });
+		},
+
+
+		getFooterView(){
+			if (this.getOption('buttonsInFooter')) {
+				return this.buildButtonsView();
+			} else {
+				return this.buildFooterView();
+			}
+		},
+
+		buildFooterView(){
+			return this._buildNestedTextView('footer', { tagName: 'footer' });
+		},
+
+		buildButtonsView(){
+			if (this._buttonsView) {
+				this.stopListening(this._buttonsView);
+			}
+
+			let options = this.buildButtonsOptions();
+			let view = buildViewByKey(this, 'buttonsView', { options });
+			if (!view) { return; }
+
+			this._buttonsView = view;
+			this.settleButtonsListeners(view);
+
+			return [view, Infinity];
+		},
+		buildButtonsOptions(){
+			let btns = this.getOption('buttons');
+			if(btns) {
+				return _.reduce(btns, (hash, b) => {
+					let item = this.buildButton(b, this);
+					hash[item.name] = item;
+					return hash;
+				}, {});
+			}		
+		},
+		buildButton(value){
+			if (_.isString(value)) {
+				return this.buildButton({ text: value, className: value, name: value });
+			} else if(_.isFunction(value)) {
+				return this.buildButton(value.call(this));
+			} else if(_.isObject(value)) {
+				return this.fixButton(value);
+			}
+		},
+		fixButton(button){
+			return button;
+		},
+		settleButtonsListeners(buttonsView){
+			this.on({
+				// 'control:valid': () => {
+				// 	buttonsView.enableButton('resolve');
+				// },
+				// 'control:invalid': () => {
+				// 	buttonsView.disableButton('resolve');
+				// },
+				'control:done': (value) => {
+					this._fulfill('resolve', value);
+				}
+			});
+
+			this.listenTo(buttonsView, {
+				'resolve'(){
+					let value = this.getControlValue();
+					this._fulfill('resolve', value);
+					//this.triggerMethod('resolve', this.getControlValue());
+				},
+				'reject'(){
+					this._fulfill('reject');
+					//this.triggerMethod('reject');
+				},
+				'reject:soft'(){
+					this._fulfill('reject:soft');
+					//this.triggerMethod('reject:soft');
+				},
+				'reject:hard'(){
+					this._fulfill('reject:hard');
+					//this.triggerMethod('reject:hard');
+				},
+			});
+		},
+		_fulfill(type, ...rest){
+			this.triggerMethod(type, ...rest);
+		},
+
+		getControlView(){
+			this.control = buildViewByKey(this, 'controlView', { options: { parentControl: this, value: this.getControlValue() } });
+			return this.control;
+		},
+
+
+		_onControlInvalid(value, error){
+			this.disableButtons();
+			this._showValidateError(error);
+		},
+		_onControlValid(){
+			this.enableButtons();
+			this._hideValidateError();
+		},
+		
+		disableButtons(){
+			if(this._buttonsView && _.isFunction(this._buttonsView.disableButton)) {
+				this._buttonsView.disableButton('resolve');
+			}
+		},
+		enableButtons(){
+			if(this._buttonsView && _.isFunction(this._buttonsView.enableButton)) {
+				this._buttonsView.enableButton('resolve');
+			}
+		},
+		_showValidateError(error){
+			
+			let shouldShow = this.getOption('shouldShowError');
+			let skipFirstValidationError = this.getOption('skipFirstValidationError');
+
+			if (skipFirstValidationError && !this._firstValidationErrorSkipped) {
+				this._firstValidationErrorSkipped = true;
+				return;
+			}
+
+			if (!shouldShow) return;
+
+			let show = this.getOption('showValidateError', { force: false });
+			if (_.isFunction(show)) {
+				show.call(this, error);
+			} else {
+				if (!this._errorView) return;
+				this._errorView.showError(error);
+			}		
+		},
+		_hideValidateError(){
+			let hide = this.getOption('hideValidateError', { force: false });
+			if (_.isFunction(hide)) {
+				hide.call(this);
+			} else {
+				if (!this._errorView) return;
+				this._errorView.hideError();
+			}		
+		},
+	}, { ControlViewMixin: true });
+
+
+};
+
+var promiseBarMixin = Base => {
+	if (Base == null) {
+		Base = CollectionView;
+	}
+
+	if(!isClass(Base, CollectionView)){
+		throw new Error('promiseBar mixin can be applied only on CollectionView');
+	}
+
+	let Mixed = Base;
+
+	if (!Mixed.CssClassModifiersMixin) {
+		Mixed = cssClassModifiersMixin(Mixed);
+	}
+
+	return Mixed.extend({
+		constructor(options){
+			this._buttons = {};
+			Base.apply(this, arguments);
+			this.addPromiseBarCssClass();
+			this.mergeOptions(options, ['promise', 'reject', 'resolve', 'beforeRejectSoft', 'beforeRejectHard', 'beforeResolve']);
+		},
+		tagName: 'footer',
+		resolve:'ok',
+		triggerNameEvent: true,
+		addPromiseBarCssClass(){
+			this.addCssClassModifier('promise-bar');
+		},
+		onRender(){
+			this.addButtons();
+		},
+		addButtons(){
+			let buttons = this.buildButtons() || [];
+			while (buttons.length){
+				let button = buttons.pop();
+				let preventRender = !!buttons.length;
+				this.addChildView(button, { preventRender });
+			}
+		},
+		buildButtons(){
+			let names = ['resolve','rejectSoft','rejectHard'];
+			return _.reduce(names, (buttons, name) => {
+				let button = this.buildButton(name);
+				button && buttons.push(button);
+				return buttons;
+			}, []);
+		},
+		buildButton(name){
+			let options = this.getButtonOptions(name);
+			if (!options) return;
+			let Button = this.getOption('buttonView');
+			if (!Button) {
+				Button = this.buttonView = buttonMixin$1(View$1);
+			}
+			let btn = new Button(options);
+			this._buttons[name] = btn;
+			return btn;
+		},
+		getButtonOptions(name){
+			let options = this.getOption(name);
+			if ( !options ) return;
+			if( _.isString(options) ) {
+				options = { text: options };
+			} else if(!_.isObject(options)) {
+				return;
+			}
+			let defs = { 
+				className: name, 
+				name, 
+				triggerNameEvent: this.getOption('triggerNameEvent'), 
+				stopEvent: true,
+				text: options.text || name,
+			};
+			options = _.extend(defs, options);
+			return options;
+		},
+		childViewEvents:{
+			'click:resolve'(data){
+				this.triggerMethod('resolve', data);
+			},
+			'click:rejectSoft'(value){ 
+				this.triggerMethod('reject', { type: 'soft', value });
+				this.triggerMethod('reject:soft', value);
+			},
+			'click:rejectHard'(value){ 
+				this.triggerMethod('reject', { type: 'hard', value });
+				this.triggerMethod('reject:hard', value);
+			},
+			'click:fail'(error, name, event, view) {
+				this.triggerMethod('click:fail', error, name, event, view);
+				if (name) {
+					this.triggerMethod(`click:${name}:fail`, error, event, view);
+				}
+			}
+		},
+
+		disableButton(name){
+			let btn = this._buttons[name];
+			btn && btn.disable();
+		},
+		enableButton(name){
+			let btn = this._buttons[name];
+			btn && btn.enable();
+		},
+
+	});
+
+};
+
+var PromiseBar = promiseBarMixin(ExtCollectionVIew).extend({
+	buttonView: buttonMixin$1
+});
+
+const textView = ExtView.extend({
+	template: _.template('<%= text %>'),
+	templateContext(){		
+		return {
+			text: this.getOption('text')
+		};
+	}
+});
+
+const ControlView = controlViewMixin(ExtCollectionVIew).extend({
+	renderAllCustoms: true,
+	buttonsView: PromiseBar,
+	textView,
+	fixButton(btn){
+		if (btn.name != btn.text) { return btn; }
+
+		if (btn.text === 'rejectSoft') {
+			btn.text = 'cancel';
+		}
+
+		return btn;
+	}
+});
+
+var common = {
+	_createSchema(){
+		let schema = this.getOption('schema', { args: [ this.model, this ] });
+		let Schema = this.getSchemaClass();
+
+		if(schema instanceof Schema){
+			return schema;
+		}
+
+		
+		if(schema == null || _.isObject(schema)) {
+			return this.createSchema(Schema, schema);
+		}
+		
+	},
+	getSchema(){
+		if(this._schema) { return this._schema; }
+		
+		this._schema = this._createSchema();
+		return this._schema;
+	},
+	createSchema(Schema, options = {}){
+		return new Schema(options);
+	},
+	getSchemaClass(){
+		return this.getOption('schemaClass');
+	},
+};
+
+var propertyErrorView = ExtView.extend({
+	className:'control-validate-wrapper',
+	cssClassModifiers:[
+		(m,v) => v.errorMessage ? 'error' : ''
+	],
+	getTemplate(){		
+		return () => this.errorMessage;
+	},
+	showError(error){
+		if(_.isArray(error)){
+			error = error.join(', ').trim();
+		}
+		this.errorMessage = error;
+		this.render();
+	},
+	hideError(){
+		this.errorMessage = '';
+		this.render();
+	}
+});
+
+var EditProperty = Base => {
+	const Mixed = mix(Base).with(controlViewMixin, common);
+
+	return Mixed.extend({
+		
+		shouldShowError: false,
+		errorView: propertyErrorView,
+		className:'edit-model-property',
+		schemaClass: PropertySchema,
+		debounceChildControlEvents: 0,
+
+
+		getDefaultValidateRule(options){
+			let schema = this.getSchema();
+			let rule = _.extend({}, schema.getType(options), schema.getValidation(options));
+			return rule;
+		},
+		getValidateRule(options = {}){
+			let rule = this.getDefaultValidateRule(options);
+			return rule;
+		},
+		
+		getHeaderView(){
+			return this._getHeaderView();
+		},
+		_getHeaderView(){
+			let TextView$$1 = this.getOption('textView');
+			let buildText;
+			if (!TextView$$1) {
+				buildText = (text, opts) => new View$1(_.extend({}, opts, { template: () => text }));
+			}
+			let view = buildViewByKey(this, 'header', { TextView: TextView$$1, buildText, options: { tagName: 'header' } });
+			if(view) { return view; }
+
+			if(this.getOption('propertyLabelAsHeader')) {
+				let label = this.getSchema().getLabel();
+				if(TextView$$1) {
+					return new TextView$$1({ text: label, tagName: 'header'});
+				} else {
+					return new View$1({ template: () => label, tagName: 'header'});
+				}
+			}
+		},
+		getSchemaOptions(opts){
+			let options = {
+				value: this.getControlValue(),
+				allValues: this.getParentControlValue(),
+				model: this.model			
+			};
+			return _.extend(options, opts);
+		},
+		getControlView(){
+			let options = this.getSchemaOptions();
+			let editOptions = this.getSchema().getEdit(options);
+			return this.buildPropertyView(editOptions);
+		},
+		controlValidate(value, allValues){
+			let rule = this.getValidateRule({ value, allValues });
+			if(!rule || !_.size(rule)) return;
+			return validator.validate(value, rule, { allValues });
+		},
+		
+		// must be overrided
+		// accepts:	options arguments.
+		// returns:	should return Control instance
+		buildPropertyView(){
+			throw new Error('buildPropertyView not implemented. You should build view by your own');
+		},
+
+	});
+};
+
+var editModelMixin = Base => {
+	let Mixed = mix(Base).with(controlViewMixin, common);
+
+	return Mixed.extend({
+
+		shouldShowError: false,
+		shouldShowPropertyError: true,
+		propertyErrorView,
+		validateOnReady: true,
+		buttonsInFooter: true,
+		isControlWrapper: false,
+		schemaClass: ModelSchema,
+		editPropertyClass: EditProperty,
+
+		propertyLabelAsHeader: true,
+
+		className:'edit-model-control',
+
+		getCustoms(){
+			let customs = [];
+			customs.push(...this.getPropertiesViews());
+			customs.push(...this._customs);
+			customs = this.injectSystemViews(customs);
+			return customs;
+		},
+		getPropertiesViews(){
+			let modelSchema = this.getSchema();
+			let propertiesToShow = this.getOption('propertiesToShow', { args: [ this.model, this ]}) || [];
+			if(!propertiesToShow.length) {
+				propertiesToShow = modelSchema.getPropertiesNames();
+			}
+			return _.map(propertiesToShow, name => this._createEditProperty(name, modelSchema));
+		},
+		_createEditProperty(name, modelSchema){
+			let schema = modelSchema.getProperty(name, { create: true });
+			let EditProperty$$1 = this.getEditPropertyClass();
+			const def = {
+				controlName: name,
+				schema,
+				value: this.getPropertyValue(name),
+				allValues: this.getControlValue({ notValidated: true }),
+				propertyLabelAsHeader: this.getOption('propertyLabelAsHeader')
+			};
+			if(this.getOption('shouldShowPropertyError')) {
+				def.shouldShowError = true;
+				def.errorView = this.getOption('propertyErrorView');
+			}
+			let options = this.getEditPropertyOptions(def);
+			return this.createEditProperty(EditProperty$$1, options);
+		},
+		getPropertyValue(property){
+			return this.getControlValue(property);
+		},
+		getEditPropertyClass(){
+			return this.getOption('editPropertyClass');
+		},
+		getEditPropertyOptions(defaultOptions){
+			return _.extend({}, defaultOptions, this.getOption('editPropertyOptions'));
+		},
+		createEditProperty(EditProperty$$1, options){
+			return new EditProperty$$1(options);
+		},
+
+	});
+};
+
+const controls = {
+
+};
+
+function guesControl(arg) {
+	if(!_.isObject(arg)) {
+		return;
+	}
+	let control = getControlByName(arg.control);
+
+	if(!control){
+		control = getControlByName(arg.type);
+	}
+
+	if (!control && !!arg.sourceValues) {
+		control = getControlByName('select');
+	}
+
+	return control;
+}
+
+function getControlByName(name){
+	return controls[name];
+}
+
+function getControlBySchema(schema, opts){
+	let value = schema.getType(opts);
+	let control = getControlByName(value.control);
+	if (!control) {
+		control = getControlByName(value.type);		
+	}
+	if (!control && !!value.sourceValues) {
+		control = getControlByName('select');
+	}
+	return control;
+}
+
+function getControl(arg, opts){
+	let control;
+	if(_.isString(arg)){
+		control = getControlByName(arg, opts);
+	} else if(arg instanceof PropertySchema) {
+		control = getControlBySchema(arg, opts);
+	} else {
+		control = guesControl(arg, opts);
+	}
+	return control || controls.default;
+}
+
+function defineControl(name, Control){
+	if(!_.isString(name)) {
+		throw new Error('name must be a string');
+	}
+	controls[name] = Control;
+}
+
+const BaseEditProperty = mix(ControlView).with(EditProperty);
+
+const EditProperty$1 = BaseEditProperty.extend({
+	getEditControl(){
+		return getControl(this.getSchema(), this.getSchemaOptions());
+	},
+	getEditControlOptions(editOptions){
+		return editOptions;
+	},
+	buildPropertyView(editOptions){
+		let Control = this.getEditControl();
+		let options = this.getEditControlOptions(editOptions);
+		return new Control(options);
+	},
+});
+
+const EditModel = mix(ControlView).with(editModelMixin).extend({
+	editPropertyClass: EditProperty$1
+});
+
+const _getOption = (context, key, checkAlso) => getOption(context, key, { args:[context], checkAlso });
+
+function getInputType(inputView, opts = {}){
+	
+	let valueType = _getOption(inputView, 'valueType', opts);
+	if (valueType == null) {
+		let value = inputView.getControlValue();
+		if ( value == null) {
+			valueType = 'string';
+		} else {
+			if(_.isNumber(value))
+				valueType = 'number';
+			else if(_.isDate(value))
+				valueType = 'datetime';
+			else
+				valueType = 'string';
+		}		
+	}
+
+	if (valueType == 'number') {
+		inputView._valueIsNumber = true;
+	}
+
+	let type = _getOption(inputView, 'inputType', opts);
+	if(type == null){
+		type = _getOption(inputView.valueOptions, 'inputType', opts.valueOptions);
+	}
+	if (!type) {
+		if (inputView._valueIsNumber) {
+			type = _getOption(inputView, 'inputNumberType', opts) || 'number';
+		} else if (valueType == 'string') {
+			type = 'text';
+		} else if (valueType == 'datetime') {
+			type = 'datetime';
+		} else {
+			type = 'text';
+		}
+	}
+	inputView.inputType = type;
+	inputView.valueType = valueType;
+	return type;
+}
+
+function fixAttributes(attrs, view, opts)
+{
+	let tagName = getOption(view, opts, 'tagName');
+	if(['select', 'textarea'].indexOf(tagName) > -1) {
+		delete attrs.value;
+		delete attrs.type;
+	}
+	return attrs;
+}
+
+function setInputAttributes(inputView, opts = {}) {
+
+	let attributes = getOption(inputView, opts, 'attributes');
+
+	let check = _.extend({}, inputView, opts, inputView.valueOptions, opts.valueOptions);
+
+	let restrictionKeys = {
+		'maxLength':'maxlength', 
+		'minLength':'minlength',
+		'minValue':'min', 
+		'maxValue':'max', 
+		'valuePattern':'pattern',
+		'required':'required',
+		'value':'value'
+	};
+
+	let restrictions = {};
+	_(restrictionKeys).each((key2, key) => {
+		let value = check[key];
+		if (value != null)
+			restrictions[key2] = value;
+	});
+
+	let newattributes = _.extend({
+		value: inputView.value,
+		type: getInputType(inputView, opts),
+	}, restrictions, attributes);
+	
+	inputView.attributes = fixAttributes(newattributes, inputView, opts);
+
+	if(opts.attributes)
+		delete opts.attributes;
+}
+
+var getOption$1 = (context, key, ifNull) => getOption(context, key, { args:[context], default: ifNull });
+
+function isChar(event){
+	return event.key && event.key.length == 1 && !event.ctrlKey;
+}
+
+function keydown(eventContext) {
+	let { context, event } = eventContext;
+
+	if (context.triggerMethod('keydown', event) === false) { return; }
+
+
+	let prevent = false;
+	let stop = false;
+
+	if (isChar(event)) {
+		if (!context.isEnteredCharValid(event.key)) {
+			prevent = true;
+		}
+	}
+	if(event.keyCode == 13 && getOption$1(context, 'doneOnEnter', true)){
+		prevent = true;
+		stop = true;
+	}
+
+	stop && event.stopPropagation();
+	prevent && event.preventDefault();
+}
+
+function keyup(eventContext) {
+	let { context, event } = eventContext;
+
+	if (context.triggerMethod('keyup', event) === false) { return; }
+
+	if (event.keyCode == 13) {
+		
+		let shouldDone = getOption$1(context, 'doneOnEnter', true);
+		if (shouldDone) {
+
+			event.stopPropagation();
+			event.preventDefault();
+			context.controlDone();
+
+		}
+
+	}
+
+
+}
+
+function paste(eventContext) {
+	let { context, event } = eventContext;
+
+	
+	if (context.triggerMethod('paste', event) === false) { return; }
+
+
+	let text = event.originalEvent.clipboardData.getData('text/plain');
+	if (!text) return;
+	if (!context.isValueValid(text)) {
+		event.preventDefault();
+		event.stopPropagation();
+	}
+}
+
+function blur(eventContext) {
+	let { context, event } = eventContext;
+
+	if (context.triggerMethod('blur', event) === false) { return; }
+
+
+	if (getOption$1(context, 'doneOnBlur', true)) {
+		context.controlDone();
+	}
+}
+
+function focus(eventContext) {
+	let { context, input, event } = eventContext;
+
+	if (context.triggerMethod('focus', event) === false) { return; }
+
+	if (getOption$1(context, 'selectOnFocus', true)) {
+		input.select();
+	}
+}
+
+function input(eventContext) {
+
+	let { context, input, event } = eventContext;
+
+	if (context.triggerMethod('input', event) === false) { return; }
+
+
+	context.setControlValue(event.target.value).then(newvalue => {
+		if (event.target.value != (newvalue || '').toString()) {
+			input.value = newvalue;
+		}
+	});
+
+}
+
+var events = {
+	keydown, 
+	//keypress,
+	keyup,
+	paste,
+	blur,
+	focus,
+	input,
+	//'js:change': jsChange
+};
+
+function handleInputEvent(control, eventName, event) {
+	let options = _.extend({
+		context: control,
+		input: control.el,
+		restrictions: control.restrictions,
+		eventName,
+		event
+	});
+
+
+	let method = camelCase(`on:dom:${eventName}`);
+
+	if (_.isFunction(events[eventName])) {
+		events[eventName].call(control, options);
+	} 
+	
+	if (_.isFunction(control[method])) {
+		control[method](event, options);
+	} 
+}
+
+const _getOption$1 = (context, key, checkAlso) => 
+	getOption(context, key, { args:[context], checkAlso });
+
+function setInputEvents(inputView, opts = {}) {
+
+	let passedEvents = _getOption$1(inputView, 'events', opts);	
+
+	let eventsArray = _(events).keys();	
+	let events$$1 = _.reduce(eventsArray, (Memo, eventName) => {
+		Memo[eventName] = function(event){ 
+			handleInputEvent(this, eventName, event); 
+		};
+		return Memo;
+	}, {});
+	inputView.events = _.extend(events$$1, passedEvents);
+}
+
+//import { convertString as convert, getOption } from '../../../utils/index.js';
+var inputMixin = Base => {
+	let Mixin = Base.ControlMixin ? Base : ControlMixin(Base);
+	return Mixin.extend({
+		constructor(opts){
+			
+			this._initControl(opts);
+
+			setInputAttributes(this, opts);
+			setInputEvents(this, opts);
+			Mixin.apply(this, arguments);
+
+			if (!_.isFunction(this.getOption)) {
+				this.getOption = (...args) => getOption(this, ...args);
+			}
+
+			this.buildRestrictions();
+			let value = this.getOption('value');
+			value == null && (value = '');
+			this.el.value = value;
+			//this.setControlValue(value, { trigger: false, silent: true });
+		},
+		tagName:'input',
+		template: false,
+		doneOnEnter: true,
+		doneOnBlur: true,
+		buildRestrictions(){
+			let attrs = _.result(this, 'attributes');
+			let pickNumbers = ['maxlength', 'minlength', 'min', 'max'];
+			let pickStrings = ['pattern'];
+			let pickBools = ['required'];
+			let restrictions = {};
+			_(attrs).each((value, key) => {
+				let pick = false;
+				key = key.toLowerCase();
+				if (pickNumbers.indexOf(key) > -1) {
+					value = convertString(value, 'number');
+					pick = true;
+				} else if (pickStrings.indexOf(key) > -1) {
+					pick = true;
+				} else if (pickBools.indexOf(key) > -1) {
+					pick = true;
+					value = convertString(value, 'boolean', { returnNullAndEmptyAs: true, returnOtherAs: true });
+				}
+				pick && (restrictions[key] = value);
+			});
+			this.restrictions = restrictions;		
+		},
+		prepareValueBeforeSet(value){
+			if (value == null || value === '') return value;
+			
+			let len = this.getMaxLength();
+			if (len > 0) {
+				value = value.toString().substring(0, len);
+			}
+			if (this._valueIsNumber) {
+				let num = convertString(value, 'number');
+				if(isNaN(num))
+					return;
+				let min = this.restrictions.min;
+				let max = this.restrictions.max;
+				!isNaN(min) && num < min && (num = min);
+				!isNaN(max) && num > max && (num = max);
+				return num;
+			}
+			return value;
+		},
+		getValueType(){
+			return this.valueType;
+		},
+		convertValue(value){
+			return convertString(value, this.getValueType());
+		},		
+		getMaxLength()
+		{
+			return this.restrictions.maxlength;
+
+		},
+		isLengthValid(){
+			let value = this.getControlValue();
+			let len = this.getMaxLength();
+			return len == null || value.length < len;
+		},
+		isEnteredCharValid(char) {
+			let type = this.getValueType();
+
+			if (type == 'number') {
+				return ['.','-'].indexOf(char) > -1 || !isNaN(parseInt(char, 10));
+			} else {
+				return true;
+			}
+		},
+		isValueValid(value){
+			let type = this.getValueType();
+			if (type == 'number') {
+				return !isNaN(parseFloat(value, 10));
+			} else {
+				return true;
+			}
+		},
+		controlValidate(value){
+			if (value == null || value === '') {
+				if(this.restrictions.required)
+					return 'required';
+				else if (this.restrictions.minLength > 0) {
+					return 'length:small';
+				}
+				else
+					return;
+			}
+			let strValue = value.toString();
+			if (_.isNumber(this.restrictions.maxlength) && strValue.length > this.restrictions.maxlength)
+				return 'length:big';
+			if (this._valueIsNumber) {
+				if (!_.isNumber(value))
+					return 'not:number';
+				if (_.isNumber(this.restrictions.min) && value < this.restrictions.min)
+					return 'less:than:min';
+				if (_.isNumber(this.restrictions.max) && value > this.restrictions.max)
+					return 'greater:than:max';
+			}
+			if (this.restrictions.pattern) {
+				let pattern = RegExp(this.restrictions.pattern);
+				if (pattern.test(strValue)) {
+					return 'pattern:mismatch';
+				}
+			}
+		}
+	});
+};
+
+const InputControl = inputMixin(ExtView);
+
+defineControl('default', InputControl);
+defineControl('text', InputControl);
+defineControl('number', InputControl);
+
+const TextArea = inputMixin(ExtView).extend({
+	doneOnEnter: false,
+	tagName:'textarea',
+	template: data => data.value,
+	templateContext(){
+		return {
+			value: this.getControlValue()
+		};
+	}
+});
+
+
+const inputEvents = ['focus','blur','input','keyup','keydown'];
+
+const TextAreaControl = ControlView.extend({
+	
+	constructor(){
+		ControlView.apply(this, arguments);
+		this.addCssClassModifier('control-textarea');
+	},
+	controlView: TextArea,
+	controlViewOptions(){
+		let attributes = this.getOption('inputAttributes');
+
+		let options = {
+			valueOptions: this.getOption('valueOptions'),			
+		};
+		if (attributes) {
+			options.attributes = attributes;			
+		}
+		return _.extend(options, this._delegateInputEvents());
+	},
+	_delegateInputEvents(){
+		let delegatedHandlers = {};
+		_.each(inputEvents, name => {
+			let handlerName = camelCase('on', name);
+			let handler = this.getOption(handlerName, { force: false });
+			if(_.isFunction(handler)) {
+				delegatedHandlers[handlerName] = (...args) => {
+					return this.triggerMethod(name, ...args);
+				};
+			}
+		});
+		return delegatedHandlers;
+	}
+});
+
+defineControl('textarea:simple', TextArea);
+defineControl('bigtext', TextAreaControl);
+defineControl('textarea', TextAreaControl);
+
+const common$1 = {
+	isSelected(){
+		let selector = this.getOption('selector');
+		return selector && selector.isSelected(this.model);
+	},
+	getText(){
+		let text = this.getOption('text', { args: [this.model, this] });
+		if (!text) {
+			text = _.isFunction(this.model.getLabel) && this.model.getLabel() || undefined;
+		}
+		if (!text) {
+			text = this.model.get('value');
+		}
+		if (!text) {
+			text = this.model.id;
+		}
+		return text;
+	},
+	triggerSelect(event){
+		this.triggerMethod('toggle:select', this, event);
+	},
+
+	_addSelectCssModifiers(){
+		this.addCssClassModifier('select-item');
+		this.addCssClassModifier((m,v) => v.isSelected() ? 'selected':'');
+	},
+};
+var mixin = Base => Base.extend({
+	constructor(){
+		Base.apply(this, arguments);
+		common$1._addSelectCssModifiers.call(this);
+	},	
+	isSelected: common$1.isSelected,
+	triggerSelect: common$1.triggerSelect,
+}, { SelectableViewMixin: true });
+
+var DefaultChildView = mix(ExtView).with(mixin).extend({
+	renderOnModelChange: true,
+	template:_.template('<i></i><span><%= text %></span><i></i>'),
+	templateContext(){
+		return {
+			text: this.getText()
+		};
+	},
+	triggers:{
+		'click':'toggle:select'
+	},
+	// events:{
+	// 	'click'(event){
+	// 		event.stopPropagation();
+	// 		this.triggerMethod('toggle:select', this, event);
+	// 	}
+	// },
+	// triggers: {
+	// 	'click':{name:'toggle:select', stopPropagation: true}
+	// },
+	getText: common$1.getText
+});
+
+//import { Collection } from 'bbmn-core';
+const BaseSelectControl = initSelectorMixin(ControlView);
+const SelectControl = BaseSelectControl.extend({
+	className: 'regular-select',
+	renderCollection: true,
+	doneOnSelect: true,
+	cssClassModifiers:[
+		'select-control',
+		(m,v) => v.isMultiple() ? 'multiple' : '',
+	],	
+	constructor(){
+		BaseSelectControl.apply(this, arguments);
+		this.collection = this.selector.getCollection();
+	},
+	childView: DefaultChildView,
+	getSelector(){
+		if(!this.selector) {
+			let selectorOptions = this._getSelectorOptions();
+			this.selector = new Selector(selectorOptions);
+		}
+		return this.selector;
+	},
+
+	onSelectorChange(){
+		let setPromise = this.setControlValue(this.selector.getValue());
+		if (!this.isMultiple() && this.getOption('doneOnSelect')) {
+			setPromise.then(() => {
+				this.controlDone();
+			});
+		}	
+	},
+	_getSelectorOptions(){
+		let source = this.getSource();
+		
+		let type = this.valueOptions.type;
+		let extractValue = this.getOption('extractValue', { force: false});
+		if (type == 'boolean') {
+			source = _.map(source, (value, ind) => ({id: convertToBoolean(ind), value }));
+			!extractValue && (extractValue = model => model.id);
+		}
+		let value = this.getControlValue();
+		if (this.isMultiple() && type === 'enum' && _.isString(value)) {
+			value = value.split(/\s*,\s*/g);
+		}
+		let opts = {
+			value,
+			source,
+			multiple: this.isMultiple(),
+		};
+		if(extractValue) {
+			opts.extractValue = extractValue;
+		}
+
+		return opts;
+	},
+
+	setFilter(filter){
+		this.selector.setSourceFilter(filter);
+	},
+	isMultiple(){
+		return this.valueOptions.multiple === true;
+	},
+	prepareValueBeforeSet(value){
+		let type = this.valueOptions.type;
+		if (type == 'text') {
+			return value != null ? value.toString() : value;
+		} else if (type == 'boolean') {
+			return convertToBoolean(value);
+		} else if(_.isString(value)){
+			return convertString(value, this.valueOptions.type);
+		} else if(_.isArray(value)) {
+			if(this.valueOptions.type == 'enum') {
+				return value.join(', ');
+			} else {
+				return _.map(value, val => convertString(val, this.valueOptions.type));
+			}
+		} else {
+			return value;
+		}
+	},
+	getSource(){
+		let src = this.valueOptions.sourceValues;
+		if(_.isFunction(src)){
+			src = src();
+		}
+		return src;
+	},
+});
+
+defineControl('select', SelectControl);
+
+var BooleanSwitchControl = ControlView.extend({
+	template:_.template('<i></i><small></small>'),
+	constructor(){
+		ControlView.apply(this, arguments);
+		this.addCssClassModifier((m,v) => v.getState());
+		this.addCssClassModifier('boolean-switch');
+		this._initClickHandler();
+		this.on('control:change', this.refreshStateLabel);
+		this.refreshStateLabel();
+	},
+	ui:{
+		label:'span'
+	},
+	getState(){
+		let val = this.getControlValue({ transform: convertToBoolean });
+		if (val == null) {
+			val = false;
+		}
+		return 'is-' + val.toString();
+	},
+	clickSelector: '',
+	_initClickHandler(){
+		let event = ('click ' + this.getOption('clickSelector')).trim();
+		this.delegateEvents({
+			[event]:'clickHandler'
+		});
+	},
+	clickHandler(event){
+		event.stopPropagation();
+		let val = this.getControlValue();
+		this.setControlValue(!val);
+	},
+	refreshStateLabel(){
+		if (!this.model) {
+			this.refreshCssClass();
+		}
+
+		let labels = this.getOption('labels');
+		if(!_.isObject(labels)){
+			return;
+		}
+		let val = this.getControlValue() === true;
+		let label = labels[val];
+		if (isEmptyValue(label)) {
+			return;
+		}
+		this.ui.label.html(label);
+
+	},
+	prepareValueBeforeSet(value){
+		return convertToBoolean(value);
+	}
+});
+
+export { version as VERSION, newObject as MnObject, BaseClass, betterResult, camelCase, takeFirst, comparator, compareAB, convertString, toNumber, extend, flattenObject as flat, getByPath, getOption, instanceGetOption, hasFlag, getFlag, isKnownCtor, ctors as knownCtors, isEmptyValue, mix, paramsToObject$1 as paramsToObject, setByPath, convertToBoolean as toBool, unFlat as unflat, compareObjects, mergeObjects$$1 as mergeObjects, cloneValue as clone, triggerMethod, triggerMethodOn, mergeOptions, buildByKey, buildViewByKey, enums, enumsStore, skipTake, renderInNode, isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass, emptyFetchMixin, index$2 as emptyViewMixin, improvedIndexesMixin, nextCollectionViewMixin, customsMixin, index$3 as fetchNextMixin, optionsMixin, index$4 as improvedFetchMixin, childrenableMixin, index$5 as nestedEntitiesMixin, index$6 as urlPatternMixin, index$7 as smartGetMixin, index$8 as saveAsPromiseMixin, cssClassModifiersMixin, index$a as nestedViewsMixin, destroyViewMixin, index$9 as buildViewByKeyMixin, index$b as scrollHandlerMixin, index$c as createAsPromiseMixin, Process, startableMixin, App, store as ModelSchemas, ModelSchema, PropertySchema, modelSchemaMixin, validator, User, Token as BearerToken, Stack as ViewStack, store$1 as store, ExtView as View, ExtCollectionVIew as CollectionView, AtomText as AtomTextView, TextView, notify, notifies, Notifier, syncWithNotifyMixin, Action, store$2 as ActionStore, actionableMixin, action, modals, Selector, initSelectorMixin, routeErrorHandler, PagedApp, PageRouter, Page, historyApi, historyWatcher, buttonMixin$1 as Button, buttonMixin, ControlMixin as controlMixin, ControlView, controlViewMixin, EditProperty$1 as EditProperty, EditProperty as editPropertyMixin, EditModel, editModelMixin, propertyErrorView as SchemaErrorView, InputControl as Input, inputMixin, TextAreaControl, PromiseBar, promiseBarMixin, controls, defineControl, getControl, SelectControl, mixin as selectableViewMixin, BooleanSwitchControl };

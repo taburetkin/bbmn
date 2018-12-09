@@ -1,6 +1,6 @@
 
-export { version as VERSION } from './package.json';
 
+export { version as VERSION } from './package.json';
 
 export { 
 	//MnObject, extend, BaseClass 
@@ -16,6 +16,7 @@ export {
 		BaseClass
 
 } from 'bbmn-core';
+
 
 
 export { 
@@ -38,11 +39,15 @@ export {
 	isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass 
 } from 'bbmn-utils';
 
+
 export * from 'bbmn-mixins';
 
 
 export * from 'bbmn-components';
-/*
+
+
 export * from 'bbmn-routing';
+
+
 export * from 'bbmn-controls';
-*/
+
