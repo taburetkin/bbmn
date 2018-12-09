@@ -3699,6 +3699,7 @@ var ModelSchema = Schema.extend({
 
 const ClassStore = BaseClass.extend({	
 	constructor(options = {}){
+		BaseClass.apply(this, arguments);
 		_.extend(this, _.omit(options, 'createStore'));
 		let key = _.uniqueId('__classstore');
 		this._createStore = options.createStore;
