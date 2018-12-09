@@ -5566,10 +5566,11 @@ const Action = BaseClass.extend({
 	constructor(options = {}){
 		let { action } = options;
 		delete options.action;
-
 		_.extend(this, _.pick(options, ...instanceProperties));
-
+		
 		this.options = _.omit(options, ...instanceProperties);
+		
+		BaseClass.apply(this, arguments);
 
 		this.exec = createExec(this, action);
 	},
@@ -5610,6 +5611,7 @@ const Action = BaseClass.extend({
 
 const BaseActionStore = BaseClass.extend({
 	constructor(options = {}){
+		BaseClass.apply(this, arguments);
 		_.extend(this, options);
 		if(!_.isFunction(this.buildAction)){
 			this.buildAction = i => i;
@@ -9587,5 +9589,5 @@ var BooleanSwitchControl = ControlView.extend({
 	}
 });
 
-export { version as VERSION, newObject as MnObject, BaseClass, betterResult, camelCase, takeFirst, comparator, compareAB, convertString, toNumber, extend, flattenObject as flat, getByPath, getOption, instanceGetOption, hasFlag, getFlag, isKnownCtor, ctors as knownCtors, isEmptyValue, mix, paramsToObject$1 as paramsToObject, setByPath, convertToBoolean as toBool, unFlat as unflat, compareObjects, mergeObjects$$1 as mergeObjects, cloneValue as clone, triggerMethod, triggerMethodOn, mergeOptions, buildByKey, buildViewByKey, enums, enumsStore, skipTake, renderInNode, isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass, emptyFetchMixin, index$2 as emptyViewMixin, improvedIndexesMixin, nextCollectionViewMixin, customsMixin, index$3 as fetchNextMixin, optionsMixin, index$4 as improvedFetchMixin, childrenableMixin, index$5 as nestedEntitiesMixin, index$6 as urlPatternMixin, index$7 as smartGetMixin, index$8 as saveAsPromiseMixin, cssClassModifiersMixin, index$a as nestedViewsMixin, destroyViewMixin, index$9 as buildViewByKeyMixin, index$b as scrollHandlerMixin, index$c as createAsPromiseMixin, Process, startableMixin, App, store as ModelSchemas, ModelSchema, PropertySchema, modelSchemaMixin, validator, User, Token as BearerToken, Stack as ViewStack, store$1 as store, ExtView as View, ExtCollectionVIew as CollectionView, AtomText as AtomTextView, TextView, notify, notifies, Notifier, syncWithNotifyMixin, Action, store$2 as ActionStore, actionableMixin, action, modals, Selector, initSelectorMixin, routeErrorHandler, PagedApp, PageRouter, Page, historyApi, historyWatcher, buttonMixin$1 as Button, buttonMixin, ControlMixin as controlMixin, ControlView, controlViewMixin, EditProperty$1 as EditProperty, EditProperty as editPropertyMixin, EditModel, editModelMixin, propertyErrorView as SchemaErrorView, InputControl as Input, inputMixin, TextAreaControl, PromiseBar, promiseBarMixin, controls, defineControl, getControl, SelectControl, mixin as selectableViewMixin, BooleanSwitchControl };
+export { version as VERSION, newObject as MnObject, BaseClass, betterResult, camelCase, takeFirst, comparator, compareAB, convertString, toNumber, extend, flattenObject as flat, getByPath, getOption, instanceGetOption, hasFlag, getFlag, isKnownCtor, ctors as knownCtors, isEmptyValue, mix, paramsToObject$1 as paramsToObject, setByPath, convertToBoolean as toBool, unFlat as unflat, compareObjects, mergeObjects$$1 as mergeObjects, cloneValue as clone, triggerMethod, triggerMethodOn, mergeOptions, buildByKey, buildViewByKey, enums, enumsStore, skipTake, renderInNode, isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass, emptyFetchMixin, index$2 as emptyViewMixin, improvedIndexesMixin, nextCollectionViewMixin, customsMixin, index$3 as fetchNextMixin, optionsMixin, index$4 as improvedFetchMixin, childrenableMixin, index$5 as nestedEntitiesMixin, index$6 as urlPatternMixin, index$7 as smartGetMixin, index$8 as saveAsPromiseMixin, cssClassModifiersMixin, index$a as nestedViewsMixin, destroyViewMixin, index$9 as buildViewByKeyMixin, index$b as scrollHandlerMixin, index$c as createAsPromiseMixin, Process, startableMixin, App, store as ModelSchemas, ModelSchema, PropertySchema, modelSchemaMixin, validator, User, Token as BearerToken, Stack as ViewStack, store$1 as store, ExtView as View, ExtCollectionVIew as CollectionView, AtomText as AtomTextView, TextView, notify, notifies, Notifier, syncWithNotifyMixin, Action, store$2 as ActionStore, actionableMixin, action, modals, Selector, initSelectorMixin, ClassStore, routeErrorHandler, PagedApp, PageRouter, Page, historyApi, historyWatcher, buttonMixin$1 as Button, buttonMixin, ControlMixin as controlMixin, ControlView, controlViewMixin, EditProperty$1 as EditProperty, EditProperty as editPropertyMixin, EditModel, editModelMixin, propertyErrorView as SchemaErrorView, InputControl as Input, inputMixin, TextAreaControl, PromiseBar, promiseBarMixin, controls, defineControl, getControl, SelectControl, mixin as selectableViewMixin, BooleanSwitchControl };
 //# sourceMappingURL=bbmn.esm.js.map
