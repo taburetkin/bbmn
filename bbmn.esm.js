@@ -1,7 +1,7 @@
 import Backbone, { Collection, Events, Model, Router, View, ajax, history } from 'backbone';
 export { Model, Collection, View as BackboneView, Events, Router, history, ajax } from 'backbone';
 import $ from 'jquery';
-import Mn, { MnObject, Object as Object$1, Region, normalizeMethods, View as View$1, CollectionView } from 'backbone.marionette';
+import Mn, { MnObject, Object as Object$1, Region, normalizeMethods, Behavior, View as View$1, CollectionView } from 'backbone.marionette';
 export { Region } from 'backbone.marionette';
 import _ from 'underscore';
 
@@ -2975,6 +2975,84 @@ var index$b = Base => Base.extend({
 		}
 	},
 
+});
+
+const SortableBehavior = Behavior.extend({
+
+	//for move anchor, in our case whole view is anchor
+	selector: '.sortable-anchor',
+
+	// we have to know when childView is clicked for order
+	// and when it mouse overed while ordering
+	onAddChild(parent, view) {
+
+		let selector = this.getOption('selector');
+
+		//in case if there is a special childNode as anchor
+		view.$el.on('mousedown', selector, e => this.startDragSort(e,view));	
+		view.$el.on('mouseenter', e => this.handleMouseEnter(e, view));
+
+	},
+
+	handleMouseEnter(event, view){
+		if (!this.orderingItem || this.orderingItem == view) {
+			return;
+		}
+		this.view.swapChildViews(this.orderingItem, view);
+		this.view.triggerMethod('drag:swap:views', this.orderingItem, view);
+	},
+
+	startDragSort(event, child){
+		this.orderingItem = child;
+		//mouse up can happens outside.
+		$(document).one('mouseup', e => this.stopDragSort(e));
+		this.view.triggerMethod('before:drag:sort', child);
+	},
+	stopDragSort(){
+		let view = this.orderingItem;
+		delete this.orderingItem;
+		this.view.triggerMethod('drag:sort', view);
+	},
+});
+
+
+
+const SortableModelBehavior = SortableBehavior.extend({
+	initialize(options){
+		this.mergeOptions(options, ['swapModels', 'property']);
+		if (_.isString(this.swapModels)){
+			this.swapModels = this.view.getOption(this.swapModels);
+		}
+		if (_.isFunction(this.swapModels)) {
+			this.swapModels = this.swapModels.bind(this.view);
+		} else if (this.property) {
+			this.swapModels = this.swapModelsProperty;      
+		} else {
+			delete this.swapModels;
+		}
+	},
+	swapModelsProperty(m1,m2){
+		let key = this.property;
+		let temp = m1.get(key);
+		m1.set(key, m2.get(key));
+		m2.set(key, temp);  
+	},
+	onDragSwapViews(v1,v2){
+		if (!this.swapModels || !v1.model || !v2.model) return;
+		this.swapModels(v1.model, v2.model);
+	},
+	onBeforeDragSort(){
+		this.changedModels = new Collection();
+		this.listenTo(this.view.collection, 'change', this.storeChangedModel);
+	},
+	storeChangedModel(model){
+		this.changedModels.add(model);
+	},
+	onDragSort(){
+		this.stopListening(this.view.collection, 'change', this.storeChangedModel);
+		// do something here with changed models
+		this.view.triggerMethod('drag:sort:change', this.changedModels.models);
+	},
 });
 
 var index$c = Base => Base.extend({
@@ -9583,5 +9661,5 @@ var BooleanSwitchControl = ControlView.extend({
 	}
 });
 
-export { version as VERSION, newObject as MnObject, BaseClass, betterResult, camelCase, takeFirst, comparator, compareAB, convertString, toNumber, extend, flattenObject as flat, getByPath, getOption, instanceGetOption, hasFlag, getFlag, isKnownCtor, ctors as knownCtors, isEmptyValue, mix, paramsToObject$1 as paramsToObject, setByPath, convertToBoolean as toBool, unFlat as unflat, compareObjects, mergeObjects$$1 as mergeObjects, cloneValue as clone, triggerMethod, triggerMethodOn, mergeOptions, buildByKey, buildViewByKey, enums, enumsStore, skipTake, renderInNode, isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass, emptyFetchMixin, index$2 as emptyViewMixin, improvedIndexesMixin, nextCollectionViewMixin, customsMixin, index$3 as fetchNextMixin, optionsMixin, index$4 as improvedFetchMixin, childrenableMixin, index$5 as nestedEntitiesMixin, index$6 as urlPatternMixin, index$7 as smartGetMixin, index$8 as saveAsPromiseMixin, cssClassModifiersMixin, index$a as nestedViewsMixin, destroyViewMixin, index$9 as buildViewByKeyMixin, index$b as scrollHandlerMixin, index$c as createAsPromiseMixin, Process, startableMixin, App, store as ModelSchemas, ModelSchema, PropertySchema, modelSchemaMixin, validator, User, Token as BearerToken, Stack as ViewStack, store$1 as store, ExtView as View, ExtCollectionVIew as CollectionView, AtomText as AtomTextView, TextView, notify, notifies, Notifier, syncWithNotifyMixin, Action, store$2 as ActionStore, actionableMixin, action, modals, Selector, initSelectorMixin, ClassStore, routeErrorHandler, PagedApp, PageRouter, Page, historyApi, historyWatcher, buttonMixin$1 as Button, buttonMixin, ControlMixin as controlMixin, ControlView, controlViewMixin, EditProperty$1 as EditProperty, EditProperty as editPropertyMixin, EditModel, editModelMixin, propertyErrorView as SchemaErrorView, InputControl as Input, inputMixin, TextAreaControl, PromiseBar, promiseBarMixin, controls, defineControl, getControl, SelectControl, mixin as selectableViewMixin, BooleanSwitchControl };
+export { version as VERSION, newObject as MnObject, BaseClass, betterResult, camelCase, takeFirst, comparator, compareAB, convertString, toNumber, extend, flattenObject as flat, getByPath, getOption, instanceGetOption, hasFlag, getFlag, isKnownCtor, ctors as knownCtors, isEmptyValue, mix, paramsToObject$1 as paramsToObject, setByPath, convertToBoolean as toBool, unFlat as unflat, compareObjects, mergeObjects$$1 as mergeObjects, cloneValue as clone, triggerMethod, triggerMethodOn, mergeOptions, buildByKey, buildViewByKey, enums, enumsStore, skipTake, renderInNode, isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass, emptyFetchMixin, index$2 as emptyViewMixin, improvedIndexesMixin, nextCollectionViewMixin, customsMixin, index$3 as fetchNextMixin, optionsMixin, index$4 as improvedFetchMixin, childrenableMixin, index$5 as nestedEntitiesMixin, index$6 as urlPatternMixin, index$7 as smartGetMixin, index$8 as saveAsPromiseMixin, cssClassModifiersMixin, index$a as nestedViewsMixin, destroyViewMixin, index$9 as buildViewByKeyMixin, index$b as scrollHandlerMixin, SortableBehavior, SortableModelBehavior, index$c as createAsPromiseMixin, Process, startableMixin, App, store as ModelSchemas, ModelSchema, PropertySchema, modelSchemaMixin, validator, User, Token as BearerToken, Stack as ViewStack, store$1 as store, ExtView as View, ExtCollectionVIew as CollectionView, AtomText as AtomTextView, TextView, notify, notifies, Notifier, syncWithNotifyMixin, Action, store$2 as ActionStore, actionableMixin, action, modals, Selector, initSelectorMixin, ClassStore, routeErrorHandler, PagedApp, PageRouter, Page, historyApi, historyWatcher, buttonMixin$1 as Button, buttonMixin, ControlMixin as controlMixin, ControlView, controlViewMixin, EditProperty$1 as EditProperty, EditProperty as editPropertyMixin, EditModel, editModelMixin, propertyErrorView as SchemaErrorView, InputControl as Input, inputMixin, TextAreaControl, PromiseBar, promiseBarMixin, controls, defineControl, getControl, SelectControl, mixin as selectableViewMixin, BooleanSwitchControl };
 //# sourceMappingURL=bbmn.esm.js.map
