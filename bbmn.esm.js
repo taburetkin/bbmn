@@ -7918,6 +7918,7 @@ var ControlMixin = Base => Base.extend({
 	initControlValue(value){
 		this._cntrl.initial = value;
 		this._cntrl.value = value;
+		this._cntrl.notValidated = value;
 	},
 	getControlName(){
 		return this._cntrl.name;
