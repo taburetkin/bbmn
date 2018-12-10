@@ -7728,7 +7728,6 @@ var buttonMixin = Base => {
 		},
 
 		tagName:'button',
-		//template: _.template('<i></i><span><%= text %></span><i></i>'),
 		getTemplate(){
 			let html = [];
 			let icon = '<i></i>';
@@ -7768,22 +7767,6 @@ var buttonMixin = Base => {
 					} else {
 						this.triggerClick(before, event);
 					}
-					/*
-					this.beforeClick().then(
-						data => {
-							this.triggerMethod('click', data, e, this.name, this);
-							if (this.name) {
-								this.triggerMethod('click:' + this.name, data, e, this);
-							}
-						},
-						error => {
-							this.triggerMethod('click:fail', error, this.name, e, this);
-							if (this.name) {
-								this.triggerMethod('click:'+this.name+':fail', error, e, this);
-							}
-						}
-					);
-					*/
 				}
 			};
 		},
@@ -8970,6 +8953,11 @@ const _getOption = (context, key, checkAlso) => getOption(context, key, { args:[
 function getInputType(inputView, opts = {}){
 	
 	let valueType = _getOption(inputView, 'valueType', opts);
+	
+	if(opts.valueOptions && opts.valueOptions.type) {
+		valueType = opts.valueOptions.type;
+	}
+
 	if (valueType == null) {
 		let value = inputView.getControlValue();
 		if ( value == null) {
