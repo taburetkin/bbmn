@@ -8326,7 +8326,7 @@ var ControlMixin = Base => Base.extend({
 		},
 		'done'(controlName, value){
 			let cnt = this._getEventContext(controlName);
-
+			if(cnt.control != this) return;
 			// let isControlWraper = this.getOption('isControlWrapper');
 			// isControlWraper && (controlName = undefined);
 			let setPromise = cnt.control.setControlValue(value, { key: cnt.controlName, skipChildValidate: cnt.controlName });
