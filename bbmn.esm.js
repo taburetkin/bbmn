@@ -1373,24 +1373,31 @@ function buildByKey(context, key) {
 }
 
 function buildViewByKey(context, key) {
-	var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-	    TextView = _ref.TextView,
-	    defaultOptions = _ref.defaultOptions,
-	    options = _ref.options;
+	var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	//{ TextView, defaultOptions, options } = {}){
+	/*
+ let getOptions = {
+ 	defaultOptions,
+ 	options,
+ 	checkCtor: (ctor) => isViewClass(ctor)
+ };
+ 
+ if (TextView != null && isViewClass(TextView)) {
+ 	getOptions.buildText = (text, opts) => new TextView(_.extend({}, opts, { text }));
+ }
+ */
+	var TextView = options.TextView;
 
-	var getOptions = {
-		defaultOptions: defaultOptions,
-		options: options,
-		checkCtor: function checkCtor(ctor) {
-			return isViewClass(ctor);
-		}
+
+	var checkCtor = function checkCtor(ctor) {
+		return isViewClass(ctor);
 	};
 
-	if (TextView != null && isViewClass(TextView)) {
-		getOptions.buildText = function (text, opts) {
-			return new TextView(_.extend({}, opts, { text: text }));
-		};
-	}
+	var buildText = TextView != null && isViewClass(TextView) ? function (text, opts) {
+		return new TextView(_.extend({}, opts, { text: text }));
+	} : undefined;
+
+	var getOptions = _.extend({ checkCtor: checkCtor, buildText: buildText }, options);
 
 	return buildByKey(context, key, getOptions);
 }
