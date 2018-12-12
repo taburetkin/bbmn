@@ -2448,9 +2448,9 @@ var index$7 = Base => Base.extend({
 		if (!this.model) return;
 
 		let shouldRender = this.getOption('renderOnModelChange', { args: [this]});
-		let shouldRefresh = this.getOption('renderOnModelChange', { args: [this]});
-		let shouldTriggerRefresh = this.getOption('renderOnModelChange', { args: [this]});
-		let shouldInvoke = this.getOption('renderOnModelChange', { args: [this]});
+		let shouldRefresh = this.getOption('refreshOnModelChange', { args: [this]});
+		let shouldTriggerRefresh = this.getOption('triggerRefreshOnModelChange', { args: [this]});
+		let shouldInvoke = this.getOption('invokeOnModelChange', { args: [this]});
 
 		this.listenTo(this.model, 'before:destroy', () => this.stopListening(this.model));
 		this.listenTo(this.model, 'change', () => {
