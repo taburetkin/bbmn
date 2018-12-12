@@ -2996,7 +2996,7 @@ const SortableBehavior = Behavior.extend({
 	},
 
 	handleMouseEnter(event, view){
-		if (!this.orderingItem || this.orderingItem == view) {
+		if (!this.orderingItem || this.orderingItem == view || view.getOption('notSortable')) {
 			return;
 		}
 		this.view.swapChildViews(this.orderingItem, view);
