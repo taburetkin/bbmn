@@ -3044,7 +3044,7 @@ const SortableBehavior = Behavior.extend({
 		let selector = this.getOption('selector');
 
 		//in case if there is a special childNode as anchor
-		view.$el.on('mousedown', selector, e => this.startDragSort(e,view));	
+		view.$el.on('mousedown', selector, e => this.startDragSort(e,view));			
 		view.$el.on('mouseenter', e => this.handleMouseEnter(e, view));
 
 	},
@@ -3057,10 +3057,11 @@ const SortableBehavior = Behavior.extend({
 		this.view.triggerMethod('drag:swap:views', this.orderingItem, view);
 	},
 
-	startDragSort(event, child){
+	startDragSort(event, child, touchable){
 		this.orderingItem = child;
 		//mouse up can happens outside.
-		$(document).one('mouseup', e => this.stopDragSort(e));
+		
+		$(document).one('mouseup', e => this.stopDragSort(e, touchable));
 		this.view.triggerMethod('before:drag:sort', child);
 	},
 	stopDragSort(){
@@ -3108,6 +3109,244 @@ const SortableModelBehavior = SortableBehavior.extend({
 		// do something here with changed models
 		this.view.triggerMethod('drag:sort:change', this.changedModels.models);
 	},
+});
+
+let shouldPreventMove = false;
+let fakeListener = false;
+
+const preventCallback = event => {
+	if (shouldPreventMove) {
+		event.preventDefault();
+	}
+};
+
+// for canceling click after drag back to the clicked el
+function cancelMouseClick(e) {
+	e.stopPropagation(); // Stop the click from being propagated.
+	window.removeEventListener('click', cancelMouseClick, true); // cleanup
+}
+
+let baseManipulatorEnter = (event, initialEl) => {
+
+	let touches = !!event.touches;
+	let target = event.target;
+	if (touches) {
+		let touch = event.touches[0];
+		target = document.elementFromPoint(touch.pageX, touch.pageY);
+	}
+	if (initialEl == target || initialEl.contains(target)) return;
+
+	$(target).trigger('manipulator:enter');
+};
+
+function delayedTouchstart(touchstart, delay = 400) {
+	return function (event) {
+		
+		
+
+		if (event.touches.length !== 1) { return; }
+
+		let el = event.target;
+
+
+		var heldItem = function () {
+
+			el.removeEventListener('touchend', onReleasedItem);
+			el.removeEventListener('touchmove', onReleasedItem);
+
+
+			// preventing defalut touchmove
+			// using fakeListener from setupTouchMovePrevent
+			// and reverting value back after touch end
+			shouldPreventMove = true;
+			let returnPreventMoveValue = () => {
+				el.removeEventListener('touchend', returnPreventMoveValue);	
+				shouldPreventMove = false;
+			};
+
+
+			el.addEventListener('touchend', returnPreventMoveValue);
+
+			touchstart(event);
+
+		};
+
+		var onReleasedItem = function () {
+			el.removeEventListener('touchend', onReleasedItem);
+			el.removeEventListener('touchmove', onReleasedItem);
+			clearTimeout(timer);
+		};
+
+		var timer = setTimeout(heldItem, delay);
+		el.addEventListener('touchend', onReleasedItem);
+		el.addEventListener('touchmove', onReleasedItem);
+	};
+}
+
+
+function setupManipulatorEnter({ $el, onManipulatorEnter, onStart, onEnd, disableTouchScroll, selector, preventStart } = {}) {
+
+	if (!fakeListener) {
+		document.addEventListener('touchmove', preventCallback, { passive: false });
+		fakeListener = true;
+	}
+
+	let el = $el.get(0);
+	let manipulatorEnter = _.partial(baseManipulatorEnter, _, el);
+	let $doc = $(document);
+	let isOnStart = _.isFunction(onStart);
+	let isOnEnd = _.isFunction(onEnd);
+	let isDisableTouchScroll = _.isFunction(disableTouchScroll);
+	let isPreventStart = _.isFunction(preventStart);
+
+	let touchStart = () => {
+
+		isOnStart && onStart();
+		isDisableTouchScroll && disableTouchScroll();
+		
+		let touchEnd = () => {
+			document.removeEventListener('touchmove', manipulatorEnter);
+			document.removeEventListener('touchend', touchEnd);
+			isOnEnd && onEnd();
+		};
+
+		document.addEventListener('touchmove', manipulatorEnter, { passive: false });
+		document.addEventListener('touchend', touchEnd, { passive: false });
+
+	};
+
+	el.addEventListener('touchstart', delayedTouchstart(touchStart), { passive: false });
+	
+	$el.on('mousedown', selector, (original) => {
+		if(isPreventStart && preventStart()){
+			original.preventDefault();
+			return;
+		}
+
+		let stopHandlers = (event) => {
+			original.preventDefault();
+			event.preventDefault();
+			$doc.off('mouseenter', '*', manipulatorEnter);
+			$el.off('mousemove', mouseStart);
+			isOnEnd && onEnd();
+			return false;
+		};
+
+		let mouseStart = () => {
+			$el.one('mouseup', () => { 
+				window.addEventListener('click', cancelMouseClick, true );
+			});
+			onStart && onStart();
+			$doc.on('mouseenter', '*', manipulatorEnter);
+		};
+		$doc.one('mouseup', stopHandlers);
+		$el.one('mousemove', mouseStart);
+	});
+	$el.on('manipulator:enter', onManipulatorEnter);
+}
+
+const InteractionBehavior = Behavior.extend({
+	getOption(){
+		return getOption(this, ...arguments);
+	},
+	onAddChild(parent, view) {
+
+		setupManipulatorEnter({
+			$el: view.$el,
+
+			onManipulatorEnter: () => view.trigger('enter'),
+			onStart: () => this.startInteraction(view),
+			onEnd: () => this.endInteraction(view),
+			selector: this.getOption('selector')		
+		});		
+		this.listenTo(view, 'enter', () => this.viewEntered(view));
+		this.setupView(view);
+	},
+	viewEntered(view){
+		this.view.triggerMethod('view:entered', view);
+	},
+	startInteraction(view){
+		this.dragging = view;
+		view.dragging = true;
+		let options = this.getOption('interactionStartOptions');
+		this.view.triggerMethod('interaction:start', view, options);
+	},
+	endInteraction(view){
+		delete this.dragging;
+		delete view.dragging;
+		let options = this.getOption('interactionEndOptions');
+		this.view.triggerMethod('interaction:end', view, options);
+	},
+	setupView: _.noop,
+});
+
+const SwappableBehavior = InteractionBehavior.extend({
+	initialize(options){
+		this.initializeSwappable(options);
+	},
+
+	initializeSwappable(options){
+		this.mergeOptions(options, ['swap', 'property', 'canBeSwapped']);
+		if (_.isString(this.swap)){
+			this.swap = this.view.getOption(this.swap);
+		}
+		if (_.isFunction(this.swap)) {
+			this.swap = this.swap.bind(this.view);
+		} else if (this.property) {
+			this.swap = this.swapModelsProperty;      
+		} else {
+			delete this.swap;
+		}
+		this.changedModels = new Collection();
+	},
+
+	interactionEndOptions(){
+		return this.changedModels.models;
+	},
+
+
+	viewEntered(view){
+		let result = this.view.triggerMethod('view:entered', view);
+		if (result === false) return;
+		this.swapViews(view);
+	},		
+
+
+
+	storeChangedModel(model){
+		this.changedModels.add(model);
+	},
+	canBeSwapped(){
+		return true;
+	},
+
+	swapViews(entered){
+
+		if (!this.canBeSwapped(entered)) return;
+
+		this.view.swapChildViews(this.dragging, entered);
+		
+		this.dragging.model && this.storeChangedModel(this.dragging.model);
+		entered.model && this.storeChangedModel(entered.model);
+
+		this.view.triggerMethod('swap:views', this.dragging, entered);
+
+	},
+	onSwapViews(one, two){
+		this.swap(one, two, this.getOption('swapOptions'));
+	},
+	swapModelsProperty(v1,v2, opts){
+		if (this.property == null) return;
+		let key = this.property;
+		
+		if(v1.model == null || v2.model == null) return;
+		let m1 = v1.model;
+		let m2 = v2.model;
+
+		let temp = m1.get(key);
+		m1.set(key, m2.get(key), opts);
+		m2.set(key, temp, opts);
+	},	
 });
 
 var index$d = Base => Base.extend({
@@ -9745,5 +9984,5 @@ var BooleanSwitchControl = ControlView.extend({
 	}
 });
 
-export { version as VERSION, newObject as MnObject, BaseClass, betterResult, camelCase, takeFirst, comparator, compareAB, convertString, toNumber, extend, flattenObject as flat, getByPath, getOption, instanceGetOption, hasFlag, getFlag, isKnownCtor, ctors as knownCtors, isEmptyValue, mix, paramsToObject$1 as paramsToObject, setByPath, convertToBoolean as toBool, unFlat as unflat, compareObjects, mergeObjects$$1 as mergeObjects, cloneValue as clone, triggerMethod, triggerMethodOn, mergeOptions, buildByKey, buildViewByKey, enums, enumsStore, skipTake, renderInNode, isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass, emptyFetchMixin, index$2 as emptyViewMixin, improvedIndexesMixin, nextCollectionViewMixin, customsMixin, index$3 as fetchNextMixin, optionsMixin, index$4 as improvedFetchMixin, childrenableMixin, index$5 as nestedEntitiesMixin, index$6 as urlPatternMixin, index$7 as renderOnModelChangeMixin, index$8 as smartGetMixin, index$9 as saveAsPromiseMixin, cssClassModifiersMixin, index$b as nestedViewsMixin, destroyViewMixin, index$a as buildViewByKeyMixin, index$c as scrollHandlerMixin, SortableBehavior, SortableModelBehavior, index$d as createAsPromiseMixin, Process, startableMixin, App, store as ModelSchemas, ModelSchema, PropertySchema, modelSchemaMixin, validator, User, Token as BearerToken, Stack as ViewStack, store$1 as store, ExtView as View, ExtCollectionVIew as CollectionView, AtomText as AtomTextView, TextView, notify, notifies, Notifier, syncWithNotifyMixin, Action, store$2 as ActionStore, actionableMixin, action, modals, Selector, initSelectorMixin, ClassStore, routeErrorHandler, PagedApp, PageRouter, Page, historyApi, historyWatcher, buttonMixin$1 as Button, buttonMixin, ControlMixin as controlMixin, ControlView, controlViewMixin, EditProperty$1 as EditProperty, EditProperty as editPropertyMixin, EditModel, editModelMixin, propertyErrorView as SchemaErrorView, InputControl as Input, inputMixin, TextAreaControl, PromiseBar, promiseBarMixin, controls, defineControl, getControl, SelectControl, mixin as selectableViewMixin, BooleanSwitchControl };
+export { version as VERSION, newObject as MnObject, BaseClass, betterResult, camelCase, takeFirst, comparator, compareAB, convertString, toNumber, extend, flattenObject as flat, getByPath, getOption, instanceGetOption, hasFlag, getFlag, isKnownCtor, ctors as knownCtors, isEmptyValue, mix, paramsToObject$1 as paramsToObject, setByPath, convertToBoolean as toBool, unFlat as unflat, compareObjects, mergeObjects$$1 as mergeObjects, cloneValue as clone, triggerMethod, triggerMethodOn, mergeOptions, buildByKey, buildViewByKey, enums, enumsStore, skipTake, renderInNode, isClass, isModel, isModelClass, isCollection, isCollectionClass, isView, isViewClass, emptyFetchMixin, index$2 as emptyViewMixin, improvedIndexesMixin, nextCollectionViewMixin, customsMixin, index$3 as fetchNextMixin, optionsMixin, index$4 as improvedFetchMixin, childrenableMixin, index$5 as nestedEntitiesMixin, index$6 as urlPatternMixin, index$7 as renderOnModelChangeMixin, index$8 as smartGetMixin, index$9 as saveAsPromiseMixin, cssClassModifiersMixin, index$b as nestedViewsMixin, destroyViewMixin, index$a as buildViewByKeyMixin, index$c as scrollHandlerMixin, InteractionBehavior, SwappableBehavior, SortableBehavior, SortableModelBehavior, index$d as createAsPromiseMixin, Process, startableMixin, App, store as ModelSchemas, ModelSchema, PropertySchema, modelSchemaMixin, validator, User, Token as BearerToken, Stack as ViewStack, store$1 as store, ExtView as View, ExtCollectionVIew as CollectionView, AtomText as AtomTextView, TextView, notify, notifies, Notifier, syncWithNotifyMixin, Action, store$2 as ActionStore, actionableMixin, action, modals, Selector, initSelectorMixin, ClassStore, routeErrorHandler, PagedApp, PageRouter, Page, historyApi, historyWatcher, buttonMixin$1 as Button, buttonMixin, ControlMixin as controlMixin, ControlView, controlViewMixin, EditProperty$1 as EditProperty, EditProperty as editPropertyMixin, EditModel, editModelMixin, propertyErrorView as SchemaErrorView, InputControl as Input, inputMixin, TextAreaControl, PromiseBar, promiseBarMixin, controls, defineControl, getControl, SelectControl, mixin as selectableViewMixin, BooleanSwitchControl };
 //# sourceMappingURL=bbmn.esm.js.map
