@@ -4854,10 +4854,13 @@ var User = Model.extend({
 	isLogged(){
 		return this.get('authenticated') === true;
 	},
+	hasToken(){
+		return this.token && this.token.hasToken();
+	},
 	refresh(tokenOptions){		
 		if (this._refreshing) { return this._refreshing; }
 		let promise = this._refreshing = new Promise((resolve) => {
-			if (!this.token.hasToken()) {
+			if (!this.hasToken()) {
 				this.reflectChanges(_.extend({}, tokenOptions, { clear: true }));
 				resolve();
 			} else {

@@ -6,6 +6,9 @@
 	"module": "bbmn.esm.js",
 	"author": "dimtabu",
 	"license": "MIT",
+	"scripts": {
+		"start": "rollup -c --format esm"
+	},
 	"peerDependencies": {
 		"backbone": "^1.3.3",
 		"backbone.marionette": "^4.0.0",
