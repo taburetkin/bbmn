@@ -1,4 +1,7 @@
 node_modules
-.size-snapshot.json
+.size-snapshot.
+bbmn.iife.js
+bbmn.iife.js.map
+test.html
 yarn-error.log
 yarn.lock
