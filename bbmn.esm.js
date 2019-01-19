@@ -3805,9 +3805,9 @@ var App = BaseApp.extend({
 		return this.layoutView && this.layoutView.isRendered();
 	},
 	render(){
-		this.triggerMethod('before:layout:render');
+		this.triggerMethod('before:layout:ready');
 		this.renderLayout();
-		this.triggerMethod('layout:render');
+		this.triggerMethod('layout:ready');
 	},
 	renderLayout(options){
 		if (!this.layoutView) {
@@ -3815,7 +3815,7 @@ var App = BaseApp.extend({
 			if(!layout) { return; }
 			let region = this.getRegion();
 			region.show(layout);
-			
+
 			this.layoutView = layout;
 		}
 		return this.layoutView;
