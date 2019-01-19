@@ -3801,14 +3801,22 @@ var App = BaseApp.extend({
 			return callback.apply(this, args);
 		});
 	},
+	isRendered(){
+		return this.layoutView && this.layoutView.isRendered();
+	},
+	render(){
+		this.triggerMethod('before:layout:render');
+		this.renderLayout();
+		this.triggerMethod('layout:render');
+	},
 	renderLayout(options){
 		if (!this.layoutView) {
 			let layout = this.buildLayout(options);
 			if(!layout) { return; }
+			let region = this.getRegion();
+			region.show(this.layoutView);
 			this.layoutView = layout;
 		}
-		let region = this.getRegion();
-		region.show(this.layoutView);
 		return this.layoutView;
 	},
 	buildLayout(options){
@@ -8027,10 +8035,20 @@ var PagedApp = App.extend({
 		routeErrorHandler.setHandlers(handlers, this);
 	},
 	_initPageListeners: function _initPageListeners() {
-		this.on('start', this._buildPages);
-		this.on('pages:ready', this._startHistory);
-		this.on('page:start', this._onPageStart);
-		this.on('page:stop', this._onPageStop);
+		this.once({
+			'start': this._buildPages,
+			'pages:ready': this.render,
+			'layout:ready': this._startHistory
+		});
+		this.on({
+			'page:start': this._onPageStart,
+			'page:stop': this._onPageStop
+		});
+
+		// this.on('start', this._buildPages);
+		// this.on('pages:ready', this._startHistory);
+		// this.on('page:start', this._onPageStart);
+		// this.on('page:stop', this._onPageStop);
 	},
 	_startHistoryWatcher: function _startHistoryWatcher() {
 		if (!this.getOption('historyWatcher')) return;
