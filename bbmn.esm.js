@@ -3814,7 +3814,8 @@ var App = BaseApp.extend({
 			let layout = this.buildLayout(options);
 			if(!layout) { return; }
 			let region = this.getRegion();
-			region.show(this.layoutView);
+			region.show(layout);
+			
 			this.layoutView = layout;
 		}
 		return this.layoutView;
