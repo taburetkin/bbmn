@@ -8938,27 +8938,27 @@ var controlViewMixin = Base => {
 				// 'control:invalid': () => {
 				// 	buttonsView.disableButton('resolve');
 				// },
-				'control:done': (value) => {
-					this._fulfill('resolve', value);
+				'control:done': (value, cb) => {
+					this._fulfill('resolve', value, cb);
 				}
 			});
 
 			this.listenTo(buttonsView, {
-				'resolve'(){
+				'resolve'(data, cb){
 					let value = this.getControlValue();
-					this._fulfill('resolve', value);
+					this._fulfill('resolve', value, cb);
 					//this.triggerMethod('resolve', this.getControlValue());
 				},
-				'reject'(){
-					this._fulfill('reject');
+				'reject'(data, cb){
+					this._fulfill('reject', data, cb);
 					//this.triggerMethod('reject');
 				},
-				'reject:soft'(){
-					this._fulfill('reject:soft');
+				'reject:soft'(data, cb){
+					this._fulfill('reject:soft', data, cb);
 					//this.triggerMethod('reject:soft');
 				},
-				'reject:hard'(){
-					this._fulfill('reject:hard');
+				'reject:hard'(data, cb){
+					this._fulfill('reject:hard', data, cb);
 					//this.triggerMethod('reject:hard');
 				},
 			});
@@ -9102,17 +9102,24 @@ var promiseBarMixin = Base => {
 			options = _.extend(defs, options);
 			return options;
 		},
+		_disableWithEnableCallback(name){
+			this.disableButton(name);
+			return () => this.enableButton(name);
+		},
 		childViewEvents:{
 			'click:resolve'(data){
-				this.triggerMethod('resolve', data);
+				let cb = this._disableWithEnableCallback('resolve');
+				this.triggerMethod('resolve', data, cb);
 			},
 			'click:rejectSoft'(value){ 
-				this.triggerMethod('reject', { type: 'soft', value });
-				this.triggerMethod('reject:soft', value);
+				let cb = this._disableWithEnableCallback('rejectSoft');
+				this.triggerMethod('reject', { type: 'soft', value }, cb);
+				this.triggerMethod('reject:soft', value, cb);
 			},
 			'click:rejectHard'(value){ 
-				this.triggerMethod('reject', { type: 'hard', value });
-				this.triggerMethod('reject:hard', value);
+				let cb = this._disableWithEnableCallback('rejectHard');
+				this.triggerMethod('reject', { type: 'hard', value }, cb);
+				this.triggerMethod('reject:hard', value, cb);
 			},
 			'click:fail'(error, name, event, view) {
 				this.triggerMethod('click:fail', error, name, event, view);
@@ -9376,17 +9383,20 @@ function getControlByName(name){
 	return controls[name];
 }
 
-function getControlBySchema(schema, opts){
+function getControlBySchema(schema, opts = {}){
 	let value = schema.getType(opts);
 	let control = getControlByName(value.control);
-	if (!control && !!value.sourceValues) {
-		control = getControlByName('select');
-	}
-	if (!control && value.modelType == 'range') {
+	if (!control && value.modelType == 'range' && !opts.noRange) {
 		control = getControlByName('range:' + value.type);
 		if(!control){
 			control = getControlByName('range');
 		}
+	}
+	if (!control && !!value.sourceValues) {
+		control = getControlByName('select');
+	}
+	if (!control) {
+		control = getControlByName(value.type);
 	}
 	return control;
 }
