@@ -7951,8 +7951,21 @@ var Page = BasePage.extend({
 	getPageIcon: function getPageIcon() {
 		return this.icon;
 	},
+	_getLastStartArguments: function _getLastStartArguments() {
+		return this['startable.start.lastArguments'] || [];
+	},
+
+	_lastActionContextIndex: 1,
 	getLastActionContext: function getLastActionContext() {
-		return (this['startable.start.lastArguments'] || [])[1];
+		var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+		    original = _ref.original;
+
+		var startArgs = this._getLastStartArguments();
+		var ac = startArgs[this._lastActionContextIndex];
+		if (ac && original && ac.original) {
+			ac = ac.original;
+		}
+		return ac;
 	},
 	getDefaultRouteData: function getDefaultRouteData() {
 		var ac = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -7961,7 +7974,7 @@ var Page = BasePage.extend({
 	},
 	getRouteData: function getRouteData(ac) {
 		var custom = this.getOption('data', { args: [this, ac] });
-		return _.extend({}, this.getDefaultData(ac), custom);
+		return _.extend({}, this.getDefaultRouteData(ac), custom);
 	},
 	_childFilter: function _childFilter(item, index$$1) {
 		var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
