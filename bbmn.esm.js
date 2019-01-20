@@ -7536,8 +7536,12 @@ var Watcher = mix(BaseClass).with(Events).extend({
 	},
 	stop: function stop() {
 		this.stopListening(history);
-		this.entries.length = 0;
+		this.clear();
 		this.isWatching = false;
+	},
+	clear: function clear() {
+		this.entries.length = 0;
+		delete this.lastElement;
 	},
 
 	isActionContext: function isActionContext(cntx) {
