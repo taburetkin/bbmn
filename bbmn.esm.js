@@ -4869,15 +4869,19 @@ var User = Model.extend({
 	refresh(tokenOptions){		
 		if (this._refreshing) { return this._refreshing; }
 		let promise = this._refreshing = new Promise((resolve) => {
+			
+			let currentAttrs = _.clone(this.attributes);
+
 			if (!this.hasToken()) {
-				this.reflectChanges(_.extend({}, tokenOptions, { clear: true }));
+				this.reflectChanges(_.extend({}, tokenOptions, { clear: true }), currentAttrs);
 				resolve();
 			} else {
+				
 				this.fetch().then(() => {
-					this.reflectChanges(tokenOptions);
+					this.reflectChanges(tokenOptions, currentAttrs);
 					resolve();
 				}, () => {				
-					this.reflectChanges(_.extend({}, tokenOptions, { store: false }));
+					this.reflectChanges(_.extend({}, tokenOptions, { store: false }), currentAttrs);
 					resolve();
 				});
 			}
@@ -4887,13 +4891,15 @@ var User = Model.extend({
 		});
 		return promise;
 	},
-	reflectChanges(opts = {}){
+	reflectChanges(opts = {}, prevAttrs){
 		let { silent, clear, store = true } = opts;
 		clear && this.clear();
 		store && this.store(clear);
 		let options = _.omit(opts, 'clear', 'store');
 		!silent && this.trigger('changed', this, options);
+		this.afterReflectChanges(prevAttrs, opts);
 	},
+	afterReflectChanges(prevAttrs, opts) {},
 	isMe(arg){
 		let me = this.get(this.idAttribute);
 		return _.isEqual(me, arg);
@@ -4997,8 +5003,8 @@ const Token = Model.extend({
 		return data;
 	},
 
-	fetch(options = {}, userOptions){
-		if(this._fetching) return this._fetching;		
+	fetch(options = {}, userOptions ) {
+		if (this._fetching) return this._fetching;		
 		this._fetching = nativeAjax(options).then(
 			(json) => {
 
@@ -5018,6 +5024,7 @@ const Token = Model.extend({
 				if(error){
 
 					return Promise.reject(error);
+					
 				} else {
 					return Promise.reject(xhr);
 				}
