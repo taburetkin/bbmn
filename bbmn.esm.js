@@ -7754,7 +7754,9 @@ var RoutesMixin = {
 		if (!context.rawRoute) context.rawRoute = context.route;
 
 		if (config.relative && config.parentContext && config.parentContext.route) context.route = config.parentContext.route + '/' + context.route;
-		context.routeForGetUrl = context.url;
+
+		context.routeForGetUrl = context.route;
+
 		context.getUrl = function () {
 			var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
@@ -7963,7 +7965,7 @@ var Page = BasePage.extend({
 			label: this.getMenuLabel(data),
 			order: this.order,
 			route: context.route,
-			url: data ? context.getUrl(data) : context.route,
+			url: context.getUrl(data),
 			icon: this.getPageIcon()
 		};
 	},
